@@ -1,7 +1,7 @@
 name: "Machine-learning-e-redes-neurais-artificiais-no-melhoramento-genetico-do-cafeeiro.git"
 output_dir: ../docs
 navbar:
-  title: "Machine-learning-e-redes-neurais-artificiais-no-melhoramento-genetico-do-cafeeiro.git"
+  title: "Machine learning e redes neurais artificiais no melhoramento genetico do cafeeiro"
   left:
   - text: Home
     href: index.html
@@ -9,9 +9,14 @@ navbar:
     href: about.html
   - text: License
     href: license.html
+  right:
+  - icon: fa-github
+    text: Source code
+    href: https://github.com/WevertonGomesCosta/Machine-learning-e-redes-neurais-artificiais-no-melhoramento-genetico-do-cafeeiro
+
 output:
   workflowr::wflow_html:
-    toc: yes
-    toc_float: yes
-    theme: cosmo
-    highlight: textmate
+    toc: true
+    toc_float: true
+    theme: flatly
+    highlight: haddock
