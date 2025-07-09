@@ -1,10 +1,61 @@
 ---
 title: "About"
+author: "Costa, W. G."
+date: "`r Sys.Date()`"
+site: workflowr::wflow_site
+url: https://wevertongomescosta.github.io/Machine-learning-e-redes-neurais-artificiais-no-melhoramento-genetico-do-cafeeiro//
 output:
   workflowr::wflow_html:
-    toc: false
+    toc: FALSE
+  highlight: github
 editor_options:
   chunk_output_type: console
+github-repo: wevertongomescosta/coffee-gws
 ---
 
-Describe your project.
+# Sobre o Projeto
+
+Este projeto desenvolve e compara métodos de machine learning e redes neurais artificiais para seleção genômica ampla (GWS) em Coffea arabica e identificação de marcadores SNP informativos. Utilizamos dados fenotípicos reais (195 genótipos; 21 211 SNPs; severidade de doenças e produtividade, dados 2014–2016, UFV) e uma população F₂ simulada (1 000 indivíduos; 4 010 SNPs; cenários de 8–480 QTL; herdabilidade 0,5 e 0,8).  
+
+Modelos avaliados:
+- Splines de Regressão Adaptativa Multivariada (MARS)  
+- G-BLUP  
+- Random Forest  
+- Bagging  
+- Boosting  
+- Rede de Base Radial (RBF)  
+
+Métricas de desempenho: acurácia preditiva (R²) e erro (RMSE) via validação cruzada 5-fold. Realizamos também análise de associação genômica (GWAS) para detectar SNPs estatisticamente ligados aos fenótipos de interesse.  
+
+Este trabalho foi elaborado no escopo do edital 017/2022 (Programa de Apoio à Fixação de Jovens Doutores no Brasil, processo BPD-00922-22), sob coordenação do prof. Moysés Nascimento e bolsista Weverton Gomes da Costa.  
+
+**Publicação Associada**  
+Em desenvolvimento – preprint a ser disponibilizado em breve.
+
+Este projeto integra as atividades do [LICAE (Laboratório de Inteligência Computacional e Aprendizado Estatístico) da UFV](https://www.licae.ufv.br/).
+
+# About the Project
+
+This repository develops and benchmarks machine learning and artificial neural network methods for Genome Wide Selection (GWS) in Coffea arabica and the identification of informative SNP markers. We leverage real phenotypic data (195 genotypes; 21,211 SNPs; disease severity and yield, 2014–2016, UFV) alongside a simulated F₂ population (1,000 individuals; 4,010 SNPs; QTL scenarios from 8 to 480; heritabilities 0.5 and 0.8).
+
+Models compared:
+- Multivariate Adaptive Regression Splines (MARS)  
+- G-BLUP  
+- Random Forest  
+- Bagging  
+- Boosting  
+- Radial Basis Function Neural Network (RBF)  
+
+Performance metrics include predictive accuracy (R²) and RMSE, assessed via 5-fold cross-validation. We also perform GWAS to identify SNPs significantly associated with key traits.
+
+This work is funded by Call 017/2022 (Young Doctor Fellowship in Brazil, Process BPD-00922-22), led by Prof. Moysés Nascimento with postdoctoral fellow Weverton Gomes da Costa.
+
+**Associated Publication**  
+Manuscript in preparation; preprint to be released soon.
+
+This project is part of the activities at the [LICAE Laboratory, UFV](https://www.licae.ufv.br/).
+
+---
+
+**Author**  
+Costa, W. G.^[Weverton Gomes da Costa, Post-Doctoral Researcher, Department of Statistics, Federal University of Viçosa; weverton.costa@ufv.br]
