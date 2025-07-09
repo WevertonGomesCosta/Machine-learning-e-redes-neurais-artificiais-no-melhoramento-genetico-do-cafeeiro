@@ -1,11 +1,132 @@
 ---
-title: "Home"
+title: "Machine Learning e Redes Neurais no Melhoramento Genético do Cafeeiro"
+author: "Costa, W. G."
+date: "`r Sys.Date()`"
 site: workflowr::wflow_site
+url: https://wevertongomescosta.github.io/coffee-gws/
 output:
   workflowr::wflow_html:
-    toc: false
+    toc: FALSE
 editor_options:
   chunk_output_type: console
+github-repo: wevertongomescosta/Machine-learning-e-redes-neurais-no-melhoramento-genetico-do-cafeeiro
 ---
 
-Welcome to my research website.
+# Machine Learning e Redes Neurais no Melhoramento Genético do Cafeeiro
+
+Bem-vindo! Este repositório reúne código, dados e relatórios associados ao estudo de seleção genômica ampla (GWS) em Coffea arabica, empregando métodos de machine learning e redes neurais artificiais para seleção de genótipos e detecção de SNPs informativos.
+
+![Pipeline de Análise](images/analysis_pipeline.png)
+
+## Publicação Associada
+
+Este trabalho faz parte do Projeto de Pesquisa:  
+
+- Processo: BPD-00922-22  
+- Chamada: Edital 017/2022 – Programa de Apoio à Fixação de Jovens Doutores  
+- Período: 01/04/2023 a 28/02/2025  
+
+## Sobre o LICAE
+
+Desenvolvido no [Laboratório de Inteligência Computacional e Aprendizado Estatístico (LICAE)](https://www.licae.ufv.br/) da UFV, especialista em aplicações de IA em genômica vegetal.
+
+## Recursos Disponíveis
+
+1. **Código de Análise**: Scripts R/Python para pré-processamento, modelagem e avaliação.  
+2. **Dados**: Genótipos reais (195 indivíduos, 21 211 SNPs) e simulados (1 000 indivíduos, 4 010 SNPs).  
+3. **Notebooks**: Exemplos interativos de EDA, GWS e GWAS.  
+4. **Visualizações**: Gráficos de acurácia (R²), RMSE e ranking de genótipos.  
+
+![Arquitetura do Modelo](images/model_architecture.png)
+
+## Como Utilizar
+
+```bash
+git clone https://github.com/wevertongomescosta/Machine-learning-e-redes-neurais-no-melhoramento-genetico-do-cafeeiro.git
+cd Machine-learning-e-redes-neurais-no-melhoramento-genetico-do-cafeeiro
+# R
+Rscript -e "install.packages('renv'); renv::restore()"
+Rscript scripts/main_analysis.R
+# Python (se houver)
+pip install -r requirements.txt
+python src/train.py
+```
+
+## Contribuição
+
+Contribuições são bem-vindas via:  
+- Issues para discussão de bugs e novas funcionalidades  
+- Pull requests com correções ou extensões  
+- Sugestões de metodologias ou visualizações  
+
+Consulte o `CONTRIBUTING.md` para detalhes.
+
+## Licença
+
+Este projeto está sob a licença MIT. Veja `LICENSE` para detalhes.
+
+## Contato
+
+**Coordenador**  
+Moyses Nascimento  
+moysesnascim@ufv.br
+
+**Bolsista**  
+Weverton Gomes da Costa  
+weverton.costa@ufv.br
+
+---
+
+# Machine Learning and Neural Networks for Genomic Selection in Coffee
+
+Welcome! This repository contains all code, data, and documentation for a genomic selection (GWS) study in Coffea arabica, applying machine learning and artificial neural networks to select superior genotypes and discover informative SNPs.
+
+## Associated Publication
+
+This work is part of the research project: 
+
+- Processo: BPD-00922-22  
+- Chamada: Edital 017/2022 – Programa de Apoio à Fixação de Jovens Doutores  
+- Período: 01/04/2023 a 28/02/2025  
+
+## About LICAE
+
+Developed at the [Computational Intelligence and Statistical Learning Laboratory (LICAE)](https://www.licae.ufv.br/) at UFV, specializing in AI applications for plant genomics.
+
+## Available Resources
+
+1. **Analysis Code**: R/Python scripts for preprocessing, modeling and evaluation.  
+2. **Datasets**: Real genotypes (195 samples, 21,211 SNPs) and simulated population (1,000 samples, 4,010 SNPs).  
+3. **Notebooks**: Interactive EDA, GWS and GWAS tutorials.  
+4. **Visualizations**: Plots of predictive accuracy (R²), RMSE and genotype rankings.
+
+## How to Use
+
+```bash
+git clone https://github.com/wevertongomescosta/Machine-learning-e-redes-neurais-no-melhoramento-genetico-do-cafeeiro.git
+cd Machine-learning-e-redes-neurais-no-melhoramento-genetico-do-cafeeiro
+# R
+Rscript -e "install.packages('renv'); renv::restore()"
+Rscript scripts/main_analysis.R
+# Python (if applicable)
+pip install -r requirements.txt
+python src/train.py
+```
+
+## Contribution
+
+Contributions welcome via issues and pull requests—see `CONTRIBUTING.md` for guidelines.
+
+## License
+
+This project is licensed under the MIT License. See `LICENSE` for details.
+
+## Contact
+
+**Project Coordinator**  
+Moyses Nascimento  
+moysesnascim@ufv.br
+
+**Research Fellow**  
+Weverton Gomes da Costa  
+weverton.costa@ufv.br
