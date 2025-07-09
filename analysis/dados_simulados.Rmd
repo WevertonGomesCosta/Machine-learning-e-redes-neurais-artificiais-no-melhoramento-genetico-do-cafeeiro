@@ -1,0 +1,102 @@
+---
+title: "Dados Simulados"
+author: 
+  - Costa, W. G.^[Weverton Gomes da Costa, Pós-Doutorando, Departamento de Estatística - Universidade Federal de Viçosa, wevertonufv@gmail.com]
+date: "`r Sys.Date()`"
+site: workflowr::wflow_site
+url: https://wevertongomescosta.github.io/Machine-learning-e-redes-neurais-artificiais-no-melhoramento-genetico-do-cafeeiro//
+output:
+  workflowr::wflow_html:
+    toc: FALSE
+  highlight: github
+editor_options:
+  chunk_output_type: console
+github-repo: wevertongomescosta/Machine-learning-e-redes-neurais-artificiais-no-melhoramento-genetico-do-cafeeiro
+---
+
+## Libraries
+
+```{r}
+library(tidyverse)
+library(cvTools)
+library(kableExtra)
+```
+
+## Dataset
+
+### Phenotypic data
+
+Nesta etapa, é realizado o carregamento dos dados fenotípicos a partir do arquivo "phenotype.txt". Os dados são armazenados no objeto pheno, onde a primeira coluna é renomeada para "ID".
+
+```{r}
+pheno <- read.table("data/dados_simulados/DG#gen_F2_Vfen.txt") %>% 
+  rownames_to_column(var = "ID") %>%
+  mutate(ID=as.numeric(ID))
+```
+
+## Genotypic data
+
+Nesta etapa, é realizado o carregamento dos dados genotípicos a partir do arquivo "genome_-1_0_1.txt". Os dados são armazenados no objeto geno.
+
+```{r}
+geno <-  read.table("data/dados_simulados/genome_mapa.txt")
+```
+
+## Cross-validation
+
+A validação cruzada (CV) é uma etapa crucial para avaliar a precisão do modelo de previsão. Nesta seção, o conjunto de dados é dividido em conjuntos de treinamento e validação usando um esquema de validação cruzada.
+
+Primeiro, separamos os dados em k dobras. Em seguida, realizamos o treinamento do modelo com k-1 dobras e tentamos prever os dados dessa dobra com base nas outras. Ao selecionar o número de dobras, deve-se priorizar o equilíbrio entre o número de observações em cada dobra.
+
+####  1. Determinar o número de dobras e repetições
+
+Nesta etapa, o número de dobras (nfolds) e repetições (nrept) é definido. No exemplo, são definidas 5 dobras e 5 repetições.
+
+```{r}
+nfolds = 5  # Número de dobras para a validação cruzada
+nrept = 5  # Número de repetições para a validação cruzada
+```
+
+Como definimos 5 dobras, nossos dados serão divididos em 5 partes, com 200 observações cada.
+
+#### 2. Correspondência da ordem dos dados e as linhas da matriz de SNP
+
+Nesta etapa, os dados fenotípicos (pheno) e genotípicos (geno) são ordenados para garantir que estejam correspondentes. Isso é feito verificando se a ordem das linhas da matriz de SNP coincide com a ordem dos IDs nos dados fenotípicos.
+
+```{r}
+pheno <- pheno[order(pheno$ID, decreasing = F),]  # Ordena os dados fenotípicos pelo ID
+geno <- geno[order(row.names(geno)),]  # Ordena os dados genotípicos pelas linhas
+
+all(rownames(geno) == pheno$ID_Clone) # Verifica se todas os nomes dos genótipos são correspondentes em ambos datasets
+```
+
+#### 3. Adicionar uma coluna indicando um número para cada observação
+
+Nesta etapa, é adicionada uma coluna chamada "ID" aos dados fenotípicos (pheno). Essa coluna é útil para atribuir cada observação a uma dobra durante a validação cruzada.
+
+```{r}
+pheno$ID <- factor(1:nrow(pheno))  # Adiciona uma coluna sequencial de 1 a nrow(pheno) como IDs
+```
+
+#### 4. Atribuição das dobras
+
+Nesta etapa, cada observação é atribuída a uma dobra para a validação cruzada. O objetivo é garantir que as dobras contenham observações diferentes em cada repetição. O pacote cvTools é utilizado para realizar essa atribuição, e o resultado é armazenado na lista sort
+
+Neste passo, usaremos o pacote cvTools [cvTools](https://cran.r-project.org/web/packages/cvTools/cvTools.pdf) package [@cvTools]
+
+```{r}
+set.seed(100)  # Define a semente para reprodutibilidade
+sort <- list()  # Cria uma lista vazia para armazenar as atribuições das dobras
+for (a in 1:nrept) {
+  folds <- cvFolds(nlevels(pheno$ID),
+                   type = "consecutive",
+                   K = nfolds,
+                   R = a)  # Realiza a atribuição das dobras usando cvFolds
+  Sample <- cbind(folds$which, folds$subsets)  # Combina as informações das dobras e subconjuntos
+  cv <- split(Sample[, 2], f = Sample[, 1])  # Divide as observações em cada dobra
+  sort[[a]] <- cv  # Armazena as atribuições das dobras na lista sort
+}
+rm(cv,folds,Sample,a)  # Remove as variáveis temporárias
+```
+
+
