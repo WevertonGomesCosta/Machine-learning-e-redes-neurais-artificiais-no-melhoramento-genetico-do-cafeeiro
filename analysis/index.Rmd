@@ -1,15 +1,16 @@
 ---
 title: "Machine Learning e Redes Neurais no Melhoramento Genético do Cafeeiro"
-author: "Costa, W. G."
+author: 
+  - Costa, W. G.^[Weverton Gomes da Costa, Pós-Doutorando, Departamento de Estatística - Universidade Federal de Viçosa, wevertonufv@gmail.com]
 date: "`r Sys.Date()`"
 site: workflowr::wflow_site
-url: https://wevertongomescosta.github.io/coffee-gws/
+url: https://wevertongomescosta.github.io/Machine-learning-e-redes-neurais-artificiais-no-melhoramento-genetico-do-cafeeiro//
 output:
   workflowr::wflow_html:
     toc: FALSE
 editor_options:
   chunk_output_type: console
-github-repo: wevertongomescosta/Machine-learning-e-redes-neurais-no-melhoramento-genetico-do-cafeeiro
+github-repo: wevertongomescosta/Machine-learning-e-redes-neurais-artificiais-no-melhoramento-genetico-do-cafeeiro
 ---
 
 # Machine Learning e Redes Neurais no Melhoramento Genético do Cafeeiro

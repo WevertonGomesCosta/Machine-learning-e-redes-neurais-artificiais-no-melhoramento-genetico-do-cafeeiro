@@ -1,6 +1,7 @@
 ---
 title: "License"
-author: "Costa, W. G."
+author: 
+  - Costa, W. G.^[Weverton Gomes da Costa, Pós-Doutorando, Departamento de Estatística - Universidade Federal de Viçosa, wevertonufv@gmail.com]
 date: "`r Sys.Date()`"
 site: workflowr::wflow_site
 url: https://wevertongomescosta.github.io/Machine-learning-e-redes-neurais-artificiais-no-melhoramento-genetico-do-cafeeiro//
@@ -9,7 +10,7 @@ output:
     toc: FALSE
 editor_options:
   chunk_output_type: console
-github-repo: wevertongomescosta/Genomic-prediction-through-machine-learning-and-neural-networks-for-traits-with-epistasis
+github-repo: wevertongomescosta/Machine-learning-e-redes-neurais-artificiais-no-melhoramento-genetico-do-cafeeiro
 ---
 
 Este material foi produzido por [Costa, W. G.](https://github.com/WevertonGomesCosta), está licenciado sob a Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
