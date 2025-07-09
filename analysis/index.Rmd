@@ -27,8 +27,7 @@ Este trabalho faz parte do Projeto de Pesquisa:
 - Período: 01/04/2023 a 28/02/2025  
 
 ## Sobre o LICAE
-
-Desenvolvido no [Laboratório de Inteligência Computacional e Aprendizado Estatístico (LICAE)](https://www.licae.ufv.br/) da UFV, especialista em aplicações de IA em genômica vegetal.
+Este projeto foi desenvolvido no âmbito das pesquisas do [Laboratório de Inteligência Computacional e Aprendizado Estatístico (LICAE)](https://www.licae.ufv.br/) da Universidade Federal de Viçosa (UFV), especializado em aplicações avançadas de inteligência computacional em problemas genômicos complexos.
 
 ## Recursos Disponíveis
 
@@ -40,93 +39,100 @@ Desenvolvido no [Laboratório de Inteligência Computacional e Aprendizado Estat
 ![Arquitetura do Modelo](images/model_architecture.png)
 
 ## Como Utilizar
-
-```bash
-git clone https://github.com/wevertongomescosta/Machine-learning-e-redes-neurais-no-melhoramento-genetico-do-cafeeiro.git
-cd Machine-learning-e-redes-neurais-no-melhoramento-genetico-do-cafeeiro
-# R
-Rscript -e "install.packages('renv'); renv::restore()"
-Rscript scripts/main_analysis.R
-# Python (se houver)
-pip install -r requirements.txt
-python src/train.py
-```
+1. Clone o repositório: `git clone https://github.com/wevertongomescosta/Genomic-prediction-through-machine-learning-and-neural-networks-for-traits-with-epistasis.git`
+2. Instale as dependências: `renv::restore()`
+3. Execute o pipeline principal: `Rscript scripts/main_analysis.R`
 
 ## Contribuição
-
-Contribuições são bem-vindas via:  
-- Issues para discussão de bugs e novas funcionalidades  
-- Pull requests com correções ou extensões  
-- Sugestões de metodologias ou visualizações  
-
-Consulte o `CONTRIBUTING.md` para detalhes.
+Contribuições são bem-vindas mediante:
+- Abertura de issues para discussão de melhorias
+- Submissão de pull requests para correções críticas
+- Sugestões de extensões metodológicas
 
 ## Licença
-
-Este projeto está sob a licença MIT. Veja `LICENSE` para detalhes.
+Este trabalho está licenciado sob [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/). Para uso comercial ou modificações significativas, por favor contate os autores.
 
 ## Contato
-
 **Coordenador**  
 Moyses Nascimento  
+Professor Adjunto - Departamento de Estatística - UFV
 moysesnascim@ufv.br
 
 **Bolsista**  
 Weverton Gomes da Costa  
+Pós-Doutorando - Departamento de Estatística - UFV  
 weverton.costa@ufv.br
+
+
+**Laboratório LICAE**:  
+licae@ufv.br | [https://www.licae.ufv.br/](https://www.licae.ufv.br/)
 
 ---
 
-# Machine Learning and Neural Networks for Genomic Selection in Coffee
+# Machine Learning and Neural Networks in Coffee Genetic Breeding
 
-Welcome! This repository contains all code, data, and documentation for a genomic selection (GWS) study in Coffea arabica, applying machine learning and artificial neural networks to select superior genotypes and discover informative SNPs.
+Welcome! This repository gathers code, data, and reports associated with the Genome Wide Selection (GWS) study in *Coffea arabica*, employing machine learning and artificial neural network methods for genotype selection and informative SNP detection.
 
-## Associated Publication
+![Analysis Pipeline](images/analysis_pipeline.png)
 
-This work is part of the research project: 
+## Associated Project
 
-- Processo: BPD-00922-22  
-- Chamada: Edital 017/2022 – Programa de Apoio à Fixação de Jovens Doutores  
-- Período: 01/04/2023 a 28/02/2025  
+This work is part of the Research Project:
+
+- Process: BPD-00922-22  
+- Call: Notice 017/2022 – Program to Support the Retention of Young Postdocs in Brazil  
+- Period: April 1, 2023 to February 28, 2025  
 
 ## About LICAE
 
-Developed at the [Computational Intelligence and Statistical Learning Laboratory (LICAE)](https://www.licae.ufv.br/) at UFV, specializing in AI applications for plant genomics.
+This project was developed within the research activities of the [Computational Intelligence and Statistical Learning Laboratory (LICAE)](https://www.licae.ufv.br/) at the Federal University of Viçosa (UFV), specialized in advanced computational intelligence applications to complex genomic problems.
 
 ## Available Resources
 
-1. **Analysis Code**: R/Python scripts for preprocessing, modeling and evaluation.  
-2. **Datasets**: Real genotypes (195 samples, 21,211 SNPs) and simulated population (1,000 samples, 4,010 SNPs).  
-3. **Notebooks**: Interactive EDA, GWS and GWAS tutorials.  
-4. **Visualizations**: Plots of predictive accuracy (R²), RMSE and genotype rankings.
+1. **Analysis Code**: R and Python scripts for preprocessing, modeling, and evaluation.  
+2. **Data**: Real genotypes (195 individuals, 21,211 SNPs) and simulated (1,000 individuals, 4,010 SNPs).  
+3. **Notebooks**: Interactive examples of EDA, GWS, and GWAS.  
+4. **Visualizations**: Plots of accuracy (R²), RMSE, and genotype rankings.  
+
+![Model Architecture](images/model_architecture.png)
 
 ## How to Use
 
-```bash
-git clone https://github.com/wevertongomescosta/Machine-learning-e-redes-neurais-no-melhoramento-genetico-do-cafeeiro.git
-cd Machine-learning-e-redes-neurais-no-melhoramento-genetico-do-cafeeiro
-# R
-Rscript -e "install.packages('renv'); renv::restore()"
-Rscript scripts/main_analysis.R
-# Python (if applicable)
-pip install -r requirements.txt
-python src/train.py
-```
+1. Clone the repository:  
+   ```bash
+   git clone https://github.com/wevertongomescosta/coffee-gws.git
+   ```
+2. Install dependencies:  
+   ```bash
+   renv::restore()
+   ```
+3. Run the main pipeline:  
+   ```bash
+   Rscript scripts/main_analysis.R
+   ```
 
 ## Contribution
 
-Contributions welcome via issues and pull requests—see `CONTRIBUTING.md` for guidelines.
+Contributions are welcome via:  
+- Opening issues for improvement discussions  
+- Submitting pull requests for critical fixes  
+- Suggestions for methodological extensions  
 
 ## License
 
-This project is licensed under the MIT License. See `LICENSE` for details.
+This work is licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/). For commercial use or significant modifications, please contact the authors.
 
 ## Contact
 
 **Project Coordinator**  
 Moyses Nascimento  
-moysesnascim@ufv.br
+Associate Professor, Department of Statistics, UFV  
+moysesnascim@ufv.br  
 
 **Research Fellow**  
 Weverton Gomes da Costa  
-weverton.costa@ufv.br
+Post-Doctoral Researcher, Department of Statistics, UFV  
+weverton.costa@ufv.br  
+
+**LICAE Laboratory**  
+licae@ufv.br | https://www.licae.ufv.br/

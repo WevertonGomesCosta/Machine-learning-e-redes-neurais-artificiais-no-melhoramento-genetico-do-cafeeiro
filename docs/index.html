@@ -18,7 +18,7 @@
 <script src="site_libs/header-attrs-2.29/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<link href="site_libs/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
+<link href="site_libs/bootstrap-3.3.5/css/flatly.min.css" rel="stylesheet" />
 <script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
 <script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
 <script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
@@ -32,8 +32,8 @@
        code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
        pre:not([class]) { background-color: white }</style>
 <script src="site_libs/navigation-1.1/tabsets.js"></script>
-<link href="site_libs/highlightjs-9.12.0/textmate.css" rel="stylesheet" />
-<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<link href="site_libs/font-awesome-6.5.2/css/all.min.css" rel="stylesheet" />
+<link href="site_libs/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet" />
 
 <link rel="icon" href="https://github.com/workflowr/workflowr-assets/raw/main/img/reproducible.png">
 <!-- Add a small amount of space between sections. -->
@@ -54,18 +54,105 @@ div.section {
   ul.task-list{list-style: none;}
     </style>
 
-<style type="text/css">code{white-space: pre;}</style>
-<script type="text/javascript">
-if (window.hljs) {
-  hljs.configure({languages: []});
-  hljs.initHighlightingOnLoad();
-  if (document.readyState && document.readyState === "complete") {
-    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+
+
+<style type="text/css">
+  code {
+    white-space: pre;
   }
+  .sourceCode {
+    overflow: visible;
+  }
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
 }
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; } /* Alert */
+code span.an { color: #008000; } /* Annotation */
+code span.at { } /* Attribute */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #0000ff; } /* ControlFlow */
+code span.ch { color: #008080; } /* Char */
+code span.cn { } /* Constant */
+code span.co { color: #008000; } /* Comment */
+code span.cv { color: #008000; } /* CommentVar */
+code span.do { color: #008000; } /* Documentation */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.im { } /* Import */
+code span.in { color: #008000; } /* Information */
+code span.kw { color: #0000ff; } /* Keyword */
+code span.op { } /* Operator */
+code span.ot { color: #ff4000; } /* Other */
+code span.pp { color: #ff4000; } /* Preprocessor */
+code span.sc { color: #008080; } /* SpecialChar */
+code span.ss { color: #008080; } /* SpecialString */
+code span.st { color: #008080; } /* String */
+code span.va { } /* Variable */
+code span.vs { color: #008080; } /* VerbatimString */
+code span.wa { color: #008000; font-weight: bold; } /* Warning */
+
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
 </script>
-
-
 
 
 
@@ -250,7 +337,7 @@ $(document).ready(function () {
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </button>
-      <a class="navbar-brand" href="index.html">Machine-learning-e-redes-neurais-artificiais-no-melhoramento-genetico-do-cafeeiro.git</a>
+      <a class="navbar-brand" href="index.html">Machine learning e redes neurais artificiais no melhoramento genetico do cafeeiro</a>
     </div>
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
@@ -265,7 +352,13 @@ $(document).ready(function () {
 </li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
-        
+        <li>
+  <a href="https://github.com/WevertonGomesCosta/Machine-learning-e-redes-neurais-artificiais-no-melhoramento-genetico-do-cafeeiro">
+    <span class="fa fa-github"></span>
+     
+    Source code
+  </a>
+</li>
       </ul>
     </div><!--/.nav-collapse -->
   </div><!--/.container -->
@@ -346,10 +439,10 @@ changes </a>
 <div id="strongRMarkdownfilestronguncommittedchanges"
 class="panel-collapse collapse">
 <div class="panel-body">
-<p>The R Markdown file has staged changes. To know which version of the
-R Markdown file created these results, you’ll want to first commit it to
-the Git repo. If you’re still working on the analysis, you can ignore
-this warning. When you’re finished, you can run
+<p>The R Markdown file has unstaged changes. To know which version of
+the R Markdown file created these results, you’ll want to first commit
+it to the Git repo. If you’re still working on the analysis, you can
+ignore this warning. When you’re finished, you can run
 <code>wflow_publish</code> to commit the R Markdown file and build the
 HTML.</p>
 </div>
@@ -442,15 +535,15 @@ project makes it easier to run your code on other machines.</p>
 <div class="panel panel-default">
 <div class="panel-heading">
 <p class="panel-title">
-<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomWevertonGomesCostaMachinelearningeredesneuraisartificiaisnomelhoramentogeneticodocafeeirotree2f5fdb95839c6944c6ae7c65488b53b0f68886d1targetblank2f5fdb9a">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomWevertonGomesCostaMachinelearningeredesneuraisartificiaisnomelhoramentogeneticodocafeeirotreea2b18b6aff6214c5ab7c13c3c78cdb66d3c3129ctargetblanka2b18b6a">
 <span class="glyphicon glyphicon-ok text-success"
 aria-hidden="true"></span> <strong>Repository version:</strong>
-<a href="https://github.com/WevertonGomesCosta/Machine-learning-e-redes-neurais-artificiais-no-melhoramento-genetico-do-cafeeiro/tree/2f5fdb95839c6944c6ae7c65488b53b0f68886d1" target="_blank">2f5fdb9</a>
+<a href="https://github.com/WevertonGomesCosta/Machine-learning-e-redes-neurais-artificiais-no-melhoramento-genetico-do-cafeeiro/tree/a2b18b6aff6214c5ab7c13c3c78cdb66d3c3129c" target="_blank">a2b18b6</a>
 </a>
 </p>
 </div>
 <div
-id="strongRepositoryversionstrongahrefhttpsgithubcomWevertonGomesCostaMachinelearningeredesneuraisartificiaisnomelhoramentogeneticodocafeeirotree2f5fdb95839c6944c6ae7c65488b53b0f68886d1targetblank2f5fdb9a"
+id="strongRepositoryversionstrongahrefhttpsgithubcomWevertonGomesCostaMachinelearningeredesneuraisartificiaisnomelhoramentogeneticodocafeeirotreea2b18b6aff6214c5ab7c13c3c78cdb66d3c3129ctargetblanka2b18b6a"
 class="panel-collapse collapse">
 <div class="panel-body">
 <p>
@@ -460,7 +553,7 @@ reproducibility.
 </p>
 <p>
 The results in this page were generated with repository version
-<a href="https://github.com/WevertonGomesCosta/Machine-learning-e-redes-neurais-artificiais-no-melhoramento-genetico-do-cafeeiro/tree/2f5fdb95839c6944c6ae7c65488b53b0f68886d1" target="_blank">2f5fdb9</a>.
+<a href="https://github.com/WevertonGomesCosta/Machine-learning-e-redes-neurais-artificiais-no-melhoramento-genetico-do-cafeeiro/tree/a2b18b6aff6214c5ab7c13c3c78cdb66d3c3129c" target="_blank">a2b18b6</a>.
 See the <em>Past versions</em> tab to see a history of the changes made
 to the R Markdown and HTML files.
 </p>
@@ -477,7 +570,7 @@ were generated:
 Ignored files:
     Ignored:    .Rproj.user/
 
-Staged changes:
+Unstaged changes:
     Modified:   analysis/index.Rmd
 
 </code></pre>
@@ -522,6 +615,40 @@ Message
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>
+Rmd
+</td>
+<td>
+<a href="https://github.com/WevertonGomesCosta/Machine-learning-e-redes-neurais-artificiais-no-melhoramento-genetico-do-cafeeiro/blob/b8cc56b75d980c780ca34e8c3ec67f24e1ca25bb/analysis/index.Rmd" target="_blank">b8cc56b</a>
+</td>
+<td>
+WevertonGomesCosta
+</td>
+<td>
+2025-07-09
+</td>
+<td>
+add index
+</td>
+</tr>
+<tr>
+<td>
+html
+</td>
+<td>
+<a href="https://rawcdn.githack.com/WevertonGomesCosta/Machine-learning-e-redes-neurais-artificiais-no-melhoramento-genetico-do-cafeeiro/b8cc56b75d980c780ca34e8c3ec67f24e1ca25bb/docs/index.html" target="_blank">b8cc56b</a>
+</td>
+<td>
+WevertonGomesCosta
+</td>
+<td>
+2025-07-09
+</td>
+<td>
+add index
+</td>
+</tr>
 <tr>
 <td>
 Rmd
@@ -573,9 +700,11 @@ Doutores<br />
 </div>
 <div id="sobre-o-licae" class="section level2">
 <h2>Sobre o LICAE</h2>
-<p>Desenvolvido no <a href="https://www.licae.ufv.br/">Laboratório de
-Inteligência Computacional e Aprendizado Estatístico (LICAE)</a> da UFV,
-especialista em aplicações de IA em genômica vegetal.</p>
+<p>Este projeto foi desenvolvido no âmbito das pesquisas do <a
+href="https://www.licae.ufv.br/">Laboratório de Inteligência
+Computacional e Aprendizado Estatístico (LICAE)</a> da Universidade
+Federal de Viçosa (UFV), especializado em aplicações avançadas de
+inteligência computacional em problemas genômicos complexos.</p>
 </div>
 <div id="recursos-disponíveis" class="section level2">
 <h2>Recursos Disponíveis</h2>
@@ -599,115 +728,141 @@ ranking de genótipos.</li>
 </div>
 <div id="como-utilizar" class="section level2">
 <h2>Como Utilizar</h2>
-<pre class="bash"><code>git clone https://github.com/wevertongomescosta/Machine-learning-e-redes-neurais-no-melhoramento-genetico-do-cafeeiro.git
-cd Machine-learning-e-redes-neurais-no-melhoramento-genetico-do-cafeeiro
-# R
-Rscript -e &quot;install.packages(&#39;renv&#39;); renv::restore()&quot;
-Rscript scripts/main_analysis.R
-# Python (se houver)
-pip install -r requirements.txt
-python src/train.py</code></pre>
+<ol style="list-style-type: decimal">
+<li>Clone o repositório:
+<code>git clone https://github.com/wevertongomescosta/Genomic-prediction-through-machine-learning-and-neural-networks-for-traits-with-epistasis.git</code></li>
+<li>Instale as dependências: <code>renv::restore()</code></li>
+<li>Execute o pipeline principal:
+<code>Rscript scripts/main_analysis.R</code></li>
+</ol>
 </div>
 <div id="contribuição" class="section level2">
 <h2>Contribuição</h2>
-<p>Contribuições são bem-vindas via:<br />
-- Issues para discussão de bugs e novas funcionalidades<br />
-- Pull requests com correções ou extensões<br />
-- Sugestões de metodologias ou visualizações</p>
-<p>Consulte o <code>CONTRIBUTING.md</code> para detalhes.</p>
+<p>Contribuições são bem-vindas mediante: - Abertura de issues para
+discussão de melhorias - Submissão de pull requests para correções
+críticas - Sugestões de extensões metodológicas</p>
 </div>
 <div id="licença" class="section level2">
 <h2>Licença</h2>
-<p>Este projeto está sob a licença MIT. Veja <code>LICENSE</code> para
-detalhes.</p>
+<p>Este trabalho está licenciado sob <a
+href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA
+4.0</a>. Para uso comercial ou modificações significativas, por favor
+contate os autores.</p>
 </div>
 <div id="contato" class="section level2">
 <h2>Contato</h2>
 <p><strong>Coordenador</strong><br />
 Moyses Nascimento<br />
-<a href="mailto:moysesnascim@ufv.br"
+Professor Adjunto - Departamento de Estatística - UFV <a
+href="mailto:moysesnascim@ufv.br"
 class="email">moysesnascim@ufv.br</a></p>
 <p><strong>Bolsista</strong><br />
 Weverton Gomes da Costa<br />
+Pós-Doutorando - Departamento de Estatística - UFV<br />
 <a href="mailto:weverton.costa@ufv.br"
 class="email">weverton.costa@ufv.br</a></p>
+<p><strong>Laboratório LICAE</strong>:<br />
+<a href="mailto:licae@ufv.br" class="email">licae@ufv.br</a> | <a
+href="https://www.licae.ufv.br/">https://www.licae.ufv.br/</a></p>
 <hr />
 </div>
 </div>
 <div
-id="machine-learning-and-neural-networks-for-genomic-selection-in-coffee"
+id="machine-learning-and-neural-networks-in-coffee-genetic-breeding"
 class="section level1">
-<h1>Machine Learning and Neural Networks for Genomic Selection in
-Coffee</h1>
-<p>Welcome! This repository contains all code, data, and documentation
-for a genomic selection (GWS) study in Coffea arabica, applying machine
-learning and artificial neural networks to select superior genotypes and
-discover informative SNPs.</p>
-<div id="associated-publication" class="section level2">
-<h2>Associated Publication</h2>
-<p>This work is part of the research project:</p>
+<h1>Machine Learning and Neural Networks in Coffee Genetic Breeding</h1>
+<p>Welcome! This repository gathers code, data, and reports associated
+with the Genome Wide Selection (GWS) study in <em>Coffea arabica</em>,
+employing machine learning and artificial neural network methods for
+genotype selection and informative SNP detection.</p>
+<div class="float">
+<img src="images/analysis_pipeline.png" alt="Analysis Pipeline" />
+<div class="figcaption">Analysis Pipeline</div>
+</div>
+<div id="associated-project" class="section level2">
+<h2>Associated Project</h2>
+<p>This work is part of the Research Project:</p>
 <ul>
-<li>Processo: BPD-00922-22<br />
+<li>Process: BPD-00922-22<br />
 </li>
-<li>Chamada: Edital 017/2022 – Programa de Apoio à Fixação de Jovens
-Doutores<br />
+<li>Call: Notice 017/2022 – Program to Support the Retention of Young
+Postdocs in Brazil<br />
 </li>
-<li>Período: 01/04/2023 a 28/02/2025</li>
+<li>Period: April 1, 2023 to February 28, 2025</li>
 </ul>
 </div>
 <div id="about-licae" class="section level2">
 <h2>About LICAE</h2>
-<p>Developed at the <a href="https://www.licae.ufv.br/">Computational
-Intelligence and Statistical Learning Laboratory (LICAE)</a> at UFV,
-specializing in AI applications for plant genomics.</p>
+<p>This project was developed within the research activities of the <a
+href="https://www.licae.ufv.br/">Computational Intelligence and
+Statistical Learning Laboratory (LICAE)</a> at the Federal University of
+Viçosa (UFV), specialized in advanced computational intelligence
+applications to complex genomic problems.</p>
 </div>
 <div id="available-resources" class="section level2">
 <h2>Available Resources</h2>
 <ol style="list-style-type: decimal">
-<li><strong>Analysis Code</strong>: R/Python scripts for preprocessing,
-modeling and evaluation.<br />
+<li><strong>Analysis Code</strong>: R and Python scripts for
+preprocessing, modeling, and evaluation.<br />
 </li>
-<li><strong>Datasets</strong>: Real genotypes (195 samples, 21,211 SNPs)
-and simulated population (1,000 samples, 4,010 SNPs).<br />
+<li><strong>Data</strong>: Real genotypes (195 individuals, 21,211 SNPs)
+and simulated (1,000 individuals, 4,010 SNPs).<br />
 </li>
-<li><strong>Notebooks</strong>: Interactive EDA, GWS and GWAS
-tutorials.<br />
+<li><strong>Notebooks</strong>: Interactive examples of EDA, GWS, and
+GWAS.<br />
 </li>
-<li><strong>Visualizations</strong>: Plots of predictive accuracy (R²),
-RMSE and genotype rankings.</li>
+<li><strong>Visualizations</strong>: Plots of accuracy (R²), RMSE, and
+genotype rankings.</li>
 </ol>
+<div class="float">
+<img src="images/model_architecture.png" alt="Model Architecture" />
+<div class="figcaption">Model Architecture</div>
+</div>
 </div>
 <div id="how-to-use" class="section level2">
 <h2>How to Use</h2>
-<pre class="bash"><code>git clone https://github.com/wevertongomescosta/Machine-learning-e-redes-neurais-no-melhoramento-genetico-do-cafeeiro.git
-cd Machine-learning-e-redes-neurais-no-melhoramento-genetico-do-cafeeiro
-# R
-Rscript -e &quot;install.packages(&#39;renv&#39;); renv::restore()&quot;
-Rscript scripts/main_analysis.R
-# Python (if applicable)
-pip install -r requirements.txt
-python src/train.py</code></pre>
+<ol style="list-style-type: decimal">
+<li><p>Clone the repository:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">git</span> clone https://github.com/wevertongomescosta/coffee-gws.git</span></code></pre></div></li>
+<li><p>Install dependencies:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">renv::restore()</span></span></code></pre></div></li>
+<li><p>Run the main pipeline:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="ex">Rscript</span> scripts/main_analysis.R</span></code></pre></div></li>
+</ol>
 </div>
 <div id="contribution" class="section level2">
 <h2>Contribution</h2>
-<p>Contributions welcome via issues and pull requests—see
-<code>CONTRIBUTING.md</code> for guidelines.</p>
+<p>Contributions are welcome via:<br />
+- Opening issues for improvement discussions<br />
+- Submitting pull requests for critical fixes<br />
+- Suggestions for methodological extensions</p>
 </div>
 <div id="license" class="section level2">
 <h2>License</h2>
-<p>This project is licensed under the MIT License. See
-<code>LICENSE</code> for details.</p>
+<p>This work is licensed under <a
+href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA
+4.0</a>. For commercial use or significant modifications, please contact
+the authors.</p>
 </div>
 <div id="contact" class="section level2">
 <h2>Contact</h2>
 <p><strong>Project Coordinator</strong><br />
 Moyses Nascimento<br />
+Associate Professor, Department of Statistics, UFV<br />
 <a href="mailto:moysesnascim@ufv.br"
 class="email">moysesnascim@ufv.br</a></p>
 <p><strong>Research Fellow</strong><br />
 Weverton Gomes da Costa<br />
+Post-Doctoral Researcher, Department of Statistics, UFV<br />
 <a href="mailto:weverton.costa@ufv.br"
 class="email">weverton.costa@ufv.br</a></p>
+<p><strong>LICAE Laboratory</strong><br />
+<a href="mailto:licae@ufv.br" class="email">licae@ufv.br</a> | <a
+href="https://www.licae.ufv.br/"
+class="uri">https://www.licae.ufv.br/</a></p>
 <br>
 <p>
 <button type="button" class="btn btn-default btn-workflowr btn-workflowr-sessioninfo" data-toggle="collapse" data-target="#workflowr-sessioninfo" style="display: block;">
@@ -716,7 +871,7 @@ Session information
 </button>
 </p>
 <div id="workflowr-sessioninfo" class="collapse">
-<pre class="r"><code>sessionInfo()</code></pre>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code></pre></div>
 <pre><code>R version 4.4.3 (2025-02-28 ucrt)
 Platform: x86_64-w64-mingw32/x64
 Running under: Windows 11 x64 (build 26100)
