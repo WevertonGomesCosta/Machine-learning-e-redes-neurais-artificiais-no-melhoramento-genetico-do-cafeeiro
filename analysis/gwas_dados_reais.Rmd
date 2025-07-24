@@ -1,0 +1,76 @@
+---
+title: "GWAS"
+author: 
+  - Costa, W. G.^[Weverton Gomes da Costa, Pós-Doutorando, Departamento de Estatística - Universidade Federal de Viçosa, wevertonufv@gmail.com]
+date: "`r Sys.Date()`"
+site: workflowr::wflow_site
+url: https://wevertongomescosta.github.io/Machine-learning-e-redes-neurais-artificiais-no-melhoramento-genetico-do-cafeeiro//
+output:
+  workflowr::wflow_html:
+    toc: FALSE
+  highlight: github
+editor_options:
+  chunk_output_type: console
+github-repo: wevertongomescosta/Machine-learning-e-redes-neurais-artificiais-no-melhoramento-genetico-do-cafeeiro
+---
+
+## GWAS - GAPIT
+
+```{r packages}
+library(tidyverse) # Para manipulação de dados
+library(GAPIT) # Para GWAS
+```
+
+
+```{r GWAS-GLM}
+# 1) Certifique‑se de que o seu data.frame de fenótipos
+#    tem a coluna 'genotipo' e depois só colunas numéricas:
+pheno <- pheno %>%
+  # transforma tudo, exceto 'genotipo', em numeric
+  mutate(across(-genotipo, ~ as.numeric(as.character(.))))
+
+# 2) Mesma ideia para geno (você já fez isso)
+geno <- geno %>%
+  mutate(across(where(is.numeric), as.integer))
+
+GD <- geno %>%
+  # 1) Cria a coluna ID
+  mutate(ID = rownames(geno)) %>%
+  # 2) Seleciona apenas ID + todas as colunas cujo nome contém "chr"
+  select(ID, matches("chr"))
+
+# 4) Prepare o GM igualzinho
+GM <- pos_geno %>%
+  mutate(
+    SNP = pos,
+    chr = as.integer(str_extract(V1, "\\d+")),
+    pos = V2
+  ) %>%
+  select(SNP, chr, pos) %>%
+  distinct() %>%
+  filter(SNP %in% names(GD)) %>%
+  arrange(SNP)
+
+# 5) Loop de GWAS — agora todas as Y serão numéricas
+traits <- 2:(ncol(pheno)-1)
+
+for (j in traits) {
+  trait_name <- names(pheno)[j]
+
+  # Seleciona e converte a trait para numérico
+  Y <- pheno %>%
+    select(genotipo, all_of(trait_name)) %>%
+    rename(ID = genotipo) %>%
+    mutate(across(-ID, ~ as.numeric(as.character(.)))) %>% 
+    as.data.frame()
+
+  # Executa o modelo
+  modelo <- GAPIT(
+    Y = Y,
+    GD = GD,
+    GM = GM,
+    model = "GLM",
+    file.output = TRUE
+  )
+}
+```

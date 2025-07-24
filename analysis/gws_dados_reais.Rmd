@@ -1,0 +1,1393 @@
+---
+title: "GWS - Dados Reais"
+author: 
+  - Costa, W. G.^[Weverton Gomes da Costa, Pós-Doutorando, Departamento de Estatística - Universidade Federal de Viçosa, wevertonufv@gmail.com]
+date: "`r Sys.Date()`"
+site: workflowr::wflow_site
+url: https://wevertongomescosta.github.io/Machine-learning-e-redes-neurais-artificiais-no-melhoramento-genetico-do-cafeeiro//
+output:
+  workflowr::wflow_html:
+    toc: FALSE
+  highlight: github
+editor_options:
+  chunk_output_type: console
+github-repo: wevertongomescosta/Machine-learning-e-redes-neurais-artificiais-no-melhoramento-genetico-do-cafeeiro
+---
+
+## Bibliotecas
+
+```{r setup, message=FALSE, warning=FALSE}
+library(cvTools) # Para validação cruzada
+library(kableExtra) # Para tabelas
+library(parallel) # Para paralelização
+library(doParallel) # Para paralelização
+library(foreach) # Para paralelização
+library(sommer) # Para modelos mistos
+library(earth) # Para MARS
+library(rpart) # Para árvores de decisão
+library(randomForest) # Para Random Forest
+library(gbm) # Para Boosting
+library(neuralnet) # Para Redes Neurais
+library(ANN2) # Para Redes Neurais
+library(tidyverse) # Para manipulação de dados
+library(caret) # PAra importância de variaveis
+```
+
+## Carregamento dos Dados
+
+### Dados Fenotípicos
+
+Os dados fenotípicos foram obtidos a partir de um arquivo Excel contendo informações de ID e BLUPS das características fenotípicas, além de alguns marcadores.
+
+```{r load-pheno}
+# Carregar os dados fenotípicos
+dados <- readxl::read_xlsx("data/dados_reais/dados_cafe.xlsx")
+```
+
+### Rotulos dos Indivíduos
+
+Os rótulos dos indivíduos foram extraídos de um arquivo Excel, contendo informações sobre os códigos dos indivíduos e suas respectivas progenies. Esses rótulos foram utilizados para alinhar os dados fenotípicos com os genotípicos.
+
+```{r load-ind-geno}
+# Banco de dados 1
+# Carregar os rótulos dos indivíduos
+ind_geno1 <- read.table(
+  "data/dados_reais/FiltStep1_minQ10.0_minDP3_DPrange15-maxMeanDepth750_miss0.4_maf0.01_mac1_EMB_291701_SNPs_Raw.vcf.012.012.indv"
+) %>%
+  mutate(codigos_limpos = gsub("EMB_291701_|_", "", V1))
+rotulo_geno1 <- readxl::read_xls("data/dados_reais/Rótulos Novos SNPs.xls",
+                                 sheet = 2,
+                                 col_names = FALSE)
+colnames(rotulo_geno1) <- c("Obs", "codigos_limpos", "progenie", "progenie_limpos")
+
+# Limpeza dos códigos dos indivíduos
+rotulo_geno1 <- rotulo_geno1 %>%
+  mutate(
+    codigos_limpos = gsub("P03", "P01", codigos_limpos),
+    codigos_limpos = gsub("P04", "P02", codigos_limpos),
+    codigos_limpos = gsub("P05", "P03", codigos_limpos),
+    ID = as.numeric(str_extract(progenie, "(?<=\\()[0-9]+(?=\\))"))
+  ) %>%
+  arrange(Obs)
+
+# Criando uma coluna de ID
+ind_geno1$Obs <- rownames(ind_geno1)
+ind_geno1$Obs <- as.numeric(ind_geno1$Obs)
+ind_geno1 <- ind_geno1 %>%
+  arrange(Obs)
+
+# Verificação de consistência entre os códigos dos indivíduos
+ind_geno1$codigos_limpos == rotulo_geno1$codigos_limpos
+
+# Removendo individuo
+ind_geno1 <- ind_geno1 %>%
+  slice(-37)
+
+# Verificação de consistência entre os códigos dos indivíduos
+all(unique(ind_geno1$codigos_limpos == rotulo_geno1$codigos_limpos))
+
+# Criando uma coluna de ID
+ind_geno1$Obs <- rownames(ind_geno1)
+ind_geno1$Obs <- as.numeric(ind_geno1$Obs)
+ind_geno1 <- ind_geno1 %>%
+  arrange(Obs)
+
+# Unindo os dados dos indivíduos com os rótulos
+ind_geno1 <- ind_geno1 %>%
+  full_join(rotulo_geno1) %>%
+  mutate(genotipo = paste("PROG", gsub("-", "_", progenie_limpos)))
+
+# Banco de dados 2
+# Carregar os rótulos dos indivíduos
+ind_geno2 <- read.table(
+  "data/dados_reais/FiltStep1_minQ10_minDP3_DPrange15-750_miss0.4_maf0.01_mac1_EMB_291701_filt1_snps_RAW.012.indv.txt"
+)  %>%
+  mutate(
+    codigos_limpos = gsub("EMB_291701_|_", "", V1),
+    codigos_limpos2 = substr(codigos_limpos, 4, nchar(codigos_limpos))
+  )
+
+rotulo_geno2 <- readxl::read_xlsx("data/dados_reais/Rótulos C. arabica_Proj_Piloto.xlsx",
+                                  col_names = FALSE)
+colnames(rotulo_geno2) <- c("Obs", "codigos_limpos2", "progenie", "progenie_limpos", "info")
+
+# Limpeza dos códigos dos indivíduos
+rotulo_geno2 <- rotulo_geno2 %>%
+  mutate(ID = as.numeric(str_extract(progenie, "(?<=\\()[0-9]+(?=\\))"))) %>%
+  arrange(Obs)
+
+# Criando uma coluna de ID
+ind_geno2$Obs <- rownames(ind_geno2)
+ind_geno2$Obs <- as.numeric(ind_geno2$Obs)
+ind_geno2 <- ind_geno2 %>%
+  arrange(Obs)
+
+# Verificação de consistência entre os códigos dos indivíduos
+all(unique(ind_geno2$codigos_limpos2 == rotulo_geno2$codigos_limpos2))
+
+# Unindo os dados dos indivíduos com os rótulos
+ind_geno2 <- ind_geno2 %>%
+  full_join(rotulo_geno2) %>%
+  mutate(genotipo = paste("PROG", gsub("-", "_", progenie_limpos)))
+
+# Unindo os dois conjuntos de dados de indivíduos
+ind_geno <- ind_geno1 %>%
+  full_join(ind_geno2)
+
+# Filtrando os indivíduos que estão presentes no conjunto de dados fenotípicos
+ind_geno <- ind_geno %>%
+  mutate(Obs = 1:nrow(ind_geno)) %>% 
+  filter(ID %in% dados$ID)
+
+# Ajustando os nomes dos genótipos
+dados <- dados %>% 
+  left_join(ind_geno[,c("ID", "genotipo")])
+
+dados[1:5,]
+```
+
+### Dados Genotípicos - VCF
+
+Os dados genotípicos foram filtrados para remover SNPs específicos e garantir a consistência entre os dois conjuntos de dados. As colunas correspondentes aos SNPs indesejados foram removidas, e os genótipos foram ajustados para refletir apenas os indivíduos presentes no conjunto de dados fenotípicos.
+
+```{r load-geno}
+# Banco de dados 1
+# Passo 1: carregar os dados genotípicos e remover individuos indesejados
+geno1 <- read.table("data/dados_reais/FiltStep1_minQ10.0_minDP3_DPrange15-maxMeanDepth750_miss0.4_maf0.01_mac1_EMB_291701_SNPs_Raw.vcf.012.012")[-1]
+geno1 <- geno1 %>% 
+  slice(-37)
+
+# Passo 2: carregar as posições dos SNPs
+pos_geno1 <- read.table("data/dados_reais/FiltStep1_minQ10.0_minDP3_DPrange15-maxMeanDepth750_miss0.4_maf0.01_mac1_EMB_291701_SNPs_Raw.vcf.012.012.pos")
+pos_geno1 <- pos_geno1 %>% 
+  mutate(pos = paste0(V1, ":", V2))
+pos_geno1$n_markers = 1:nrow(pos_geno1)
+colnames(geno1) <- pos_geno1$pos
+
+# Passo 3: remover SNPs indesejados
+markers1 <- pos_geno1 %>% 
+  filter(pos == "chr0:177480018" | pos == "chr0:177480063" | pos == "chr0:177480100")
+geno1 <- geno1 %>% 
+  select(-all_of(markers1$n_markers))
+
+# Banco de dados 2
+# Passo 1: carregar os dados genotípicos
+geno2 <- read.table("data/dados_reais/FiltStep1_minQ10_minDP3_DPrange15-750_miss0.4_maf0.01_mac1_EMB_291701_filt1_snps_RAW.012.txt")[-1]
+pos_geno2 <- read.table("data/dados_reais/FiltStep1_minQ10_minDP3_DPrange15-750_miss0.4_maf0.01_mac1_EMB_291701_filt1_snps_RAW.012.pos.txt")
+
+# Passo 2: carregar as posições dos SNPs
+pos_geno2 <- pos_geno2 %>% 
+  mutate(pos = paste0(V1, ":", V2))
+pos_geno2$n_markers = 1:nrow(pos_geno2)
+colnames(geno2) <- pos_geno2$pos
+
+# Passo 3: remover SNPs indesejados
+markers2 <- pos_geno2 %>% 
+  filter(pos == "chr0:177480018" | pos == "chr0:177480063" | pos == "chr0:177480100")
+geno2 <- geno2 %>%
+  select(-all_of(markers2$n_markers))
+
+# Passo 4: Nomear as colunas
+geno1$genotipo1 <- ind_geno1$genotipo
+geno2$genotipo1 <- ind_geno2$genotipo
+
+# Passo 5: Filtrar os genótipos que estão presentes no conjunto de dados fenotípicos
+geno1 <- geno1 %>% 
+  filter(genotipo1 %in% dados$genotipo)
+geno2 <- geno2 %>%
+  filter(genotipo1 %in% dados$genotipo)
+
+# Passo 6: Alinhar os genótipos
+colunas_comuns <- intersect(names(geno1), names(geno2))
+
+# Passo 7: Unir os genótipos
+geno <- bind_rows(
+  select(geno1, all_of(colunas_comuns)),
+  select(geno2, all_of(colunas_comuns))
+)
+
+# Passo 8: Ajustar os valores dos genótipos
+geno[geno == -1] <- 0
+
+
+# Passo 9: Ajustar os nomes das colunas
+rownames(geno) <- geno$genotipo1
+
+# Passo 10: Remover a coluna de genotipo1
+geno <- geno %>% 
+  select(-genotipo1)
+
+# Passo 11: Padronizar os valores dos genótipos para -1, 0 e 1
+geno <- geno - 1
+geno[1:5,1:5]
+
+# Passo 12: Ajustar o arquivo de fenotipos
+pheno <- dados[c(1:4, ncol(dados))]
+rownames(pheno) <- pheno$genotipo
+pheno[1:5,]
+
+# Passo 13: Agrupar os arquivos de posição dos SNPs
+pos_geno <- bind_rows(pos_geno1, pos_geno2)
+pos_geno[1:5,]
+```
+
+
+```{r, include = FALSE}
+rm(ind_geno1, ind_geno2, rotulo_geno1, rotulo_geno2, 
+   geno1, geno2, pos_geno1, pos_geno2, markers1, markers2, colunas_comuns)
+```
+
+## Preparação para Validação Cruzada
+
+Para validação cruzada, definimos o número de dobras (nfolds) e repetições (nrept). Em seguida, alinhamos os IDs dos genótipos entre os dados fenotípicos e genotípicos, garantindo que correspondam corretamente. Por fim, geramos uma lista de dobras para validação cruzada.
+
+```{r params}
+nfolds <- 3
+nrept  <- 5
+traits <- colnames(pheno)[-c(1,5)]
+
+# Alinhamento de IDs
+pheno <- pheno[order(pheno$genotipo), ]
+geno  <- geno[order(rownames(geno)), ]
+stopifnot(all(rownames(geno) == as.character(pheno$genotipo)))
+stopifnot(all(as.character(pheno$genotipo) == rownames(geno)))
+```
+
+```{r, include=FALSE}
+saveRDS(pheno, file = "data/pheno_real.rds")
+saveRDS(geno, file = "data/geno_real.rds")
+saveRDS(posgeno, file = "data/pos_geno_real.rds")
+```
+
+
+```{r params}
+# Generating fold list
+set.seed(100)
+fold.list <- vector("list", length = nrept)
+for (r in seq_len(nrept)) {
+  folds <- cvFolds(
+    n = nrow(pheno),
+    K = nfolds,
+    R = r,
+    type = "random"
+  )
+  df <- cbind(folds$which, folds$subsets)
+  fold.list[[r]] <- split(df[, 2], df[, 1])
+}
+```
+
+```{r, include=FALSE}
+rm(r, df, folds)
+```
+
+## 1. G-BLUP
+
+O modelo G-BLUP (Genomic Best Linear Unbiased Prediction) é uma abordagem amplamente utilizada para predição genômica, que considera tanto os efeitos aditivos quanto os efeitos de dominância dos marcadores genéticos. Neste estudo, implementamos três variantes do G-BLUP: Aditivo, Aditivo-Dominante e Aditivo-Dominante-Epistástico.
+
+O modelo é implementado utilizando a função `mmes` do pacote `sommer`, que permite ajustar modelos mistos com estruturas de parentesco complexas. A validação cruzada é realizada para avaliar a acurácia preditiva do modelo.
+
+### 1.1 G-BLUP Aditivo
+
+Para o modelo G-BLUP aditivo, utilizamos a matriz de parentesco aditivo (K) calculada a partir dos dados genotípicos. Este modelo assume que os efeitos dos marcadores são puramente aditivos, sem considerar interações de dominância ou epistasia.
+
+```{r build-K}
+# Construção da matriz de parentesco aditivo (K)
+K <- A.mat(as.matrix(geno))
+colnames(K) <- rownames(K) <- rownames(pheno) <- pheno$genotipo
+```
+
+O G-BLUP aditivo é dada pelo modelo:
+
+\[
+\text{y} = \mu + \text{X}\beta + \text{Z}u + e
+\]
+
+onde:
+- \(\text{y}\) é o vetor de fenótipos,
+- \(\mu\) é a média geral,
+- \(\text{X}\) é a matriz de efeitos fixos (neste caso, intercepto),
+- \(\beta\) é o vetor de efeitos fixos,
+- \(\text{Z}\) é a matriz de efeitos aleatórios (neste caso, a matriz de parentesco aditivo \(K\)),
+- \(u\) é o vetor de efeitos aleatórios (GEBVs),
+- \(e\) é o vetor de erros aleatórios.
+
+```{r cv-gblup-a, message=FALSE, warning=FALSE}
+# Configuração do cluster para paralelização
+cl <- makeCluster(max(1, detectCores() - 1))
+registerDoParallel(cl)
+
+# Combinações de traits, repetições e dobras
+combos <- expand.grid(
+  trait = traits,
+  rep = seq_len(nrept),
+  fold = seq_len(nfolds),
+  stringsAsFactors = FALSE
+)
+
+# Execução da validação cruzada para G-BLUP aditivo
+results_cv_GBLUP_a <- foreach(
+  idx = seq_len(nrow(combos)),
+  .packages = c("sommer", "dplyr", "tibble"),
+  .combine = bind_rows
+) %dopar% {
+  # Extração dos parâmetros da combinação atual
+  tr <- combos$trait[idx]
+  r <- combos$rep[idx]
+  f <- combos$fold[idx]
+  
+  # Preparação dos dados para o modelo
+  ph <- pheno[,c("genotipo", tr)]
+  
+  # Extração da matriz de parentesco aditivo
+  K1 <- K[ph$genotipo, ph$genotipo]
+  
+  # Ajuste dos nomes das colunas e linhas da matriz K1
+  colnames(K1) <- rownames(K1) <- ph$genotipo
+  
+  # Criação do dataframe para o modelo
+  td <- ph
+  
+  # Definição dos índices de validação cruzada
+  val_idx <- fold.list[[r]][[f]]
+  td[val_idx, tr] <- NA
+  
+  # Ajuste do modelo G-BLUP aditivo
+  fit <- mmes(
+    fixed = as.formula(paste(tr, "~ 1")),
+    random = ~ vsm(ism(genotipo), Gu = K1),
+    data = td,
+    rcov = ~ units
+  )
+  
+  # Extração dos preditos e verdadeiros valores
+  pred <- fit$u
+  truth <- ph[[tr]]
+  
+  # Predição e métricas
+  pred <- data.frame(fit$u, ph)
+  
+  # Cálculo dos GEBVs para treino e validação
+  pred_T <- pred[-val_idx, "fit.u"]
+  truth_T <- pred[[tr]][-val_idx]
+  pred_V <- pred[val_idx, "fit.u"]
+  truth_V <- pred[[tr]][val_idx]
+  
+  # Criação do dataframe de resultados
+  tibble(
+    Trait = tr,
+    Rep = r,
+    Fold = f,
+    R2_Train = round(cor(pred_T, truth_T), 4),
+    R2_Valid = round(cor(pred_V, truth_V), 4),
+    RMSE_Train = round(sqrt(mean((pred_T - truth_T)^2)), 4),
+    RMSE_Valid = round(sqrt(mean((pred_V - truth_V)^2)), 4),
+    GEBV_T = list(pred_T),
+    GEBV_V = list(pred_V)
+  )
+}
+
+# Finalização do cluster
+stopCluster(cl)
+
+# Salvando os resultados da validação cruzada
+saveRDS(results_cv_GBLUP_a, file = "output/real_results_cv_GBLUP_a.rds")
+```
+
+```{r, include=FALSE}
+rm(K, results_cv_GBLUP_a, combos)
+gc()
+```
+
+### 1.2 G-BLUP Aditivo-Dominante
+
+O modelo G-BLUP aditivo-dominante estende o G-BLUP aditivo ao incluir efeitos de dominância, permitindo capturar interações entre alelos homozigotos e heterozigotos. A matriz de parentesco aditivo-dominante (D) é utilizada para modelar esses efeitos.
+
+```{r build-K-D}
+# Construção das matrizes de parentesco aditivo (K) e aditivo-dominante (D)
+K <- A.mat(as.matrix(geno))
+D <- D.mat(as.matrix(geno))
+colnames(K) <- rownames(K) <- rownames(pheno) <- pheno$genotipo
+colnames(D) <- rownames(D) <- rownames(pheno) 
+```
+
+O G-BLUP aditivo-dominante é dada pelo modelo:
+
+\[
+\text{y} = \mu + \text{X}\beta + \text{Z}_a u_a + \text{Z}_d u_d + e
+\]
+
+onde:
+- \(\text{y}\) é o vetor de fenótipos,
+- \(\mu\) é a média geral,
+- \(\text{X}\) é a matriz de efeitos fixos (neste caso, intercepto),
+- \(\beta\) é o vetor de efeitos fixos,
+- \(\text{Z}_a\) é a matriz de efeitos aleatórios aditivos (matriz K),
+- \(u_a\) é o vetor de efeitos aleatórios aditivos (GEBVs aditivos),
+- \(\text{Z}_d\) é a matriz de efeitos aleatórios dominantes (matriz D),
+- \(u_d\) é o vetor de efeitos aleatórios dominantes (GEBVs dominantes),
+- \(e\) é o vetor de erros aleatórios.
+
+```{r cv-gblup-ad, message=FALSE, warning=FALSE}
+# Configuração do cluster para paralelização
+cl <- makeCluster(max(1, detectCores() - 1))
+registerDoParallel(cl)
+
+# Combinações de traits, repetições e dobras
+combos <- expand.grid(
+  trait = traits,
+  rep = seq_len(nrept),
+  fold = seq_len(nfolds),
+  stringsAsFactors = FALSE
+)
+
+# Execução da validação cruzada para G-BLUP aditivo-dominante
+results_cv_GBLUP_ad <- foreach(
+  idx = seq_len(nrow(combos)),
+  .packages = c("sommer", "dplyr", "tibble"),
+  .combine = bind_rows
+) %dopar% {
+  # Extração dos parâmetros da combinação atual
+  tr <- combos$trait[idx]
+  r <- combos$rep[idx]
+  f <- combos$fold[idx]
+  
+  # Preparação dos dados para o modelo
+  ph <- pheno[,c("genotipo", tr)]
+  K1 <- K[ph$genotipo, ph$genotipo]
+  D1 <- D[ph$genotipo, ph$genotipo]
+  
+  # Ajuste dos nomes das colunas e linhas das matrizes K1 e D1
+  colnames(K1) <- rownames(K1) <- ph$genotipo
+  colnames(D1) <- rownames(D1) <- ph$genotipo
+  
+  # Criação do dataframe para o modelo
+  td <- ph
+  td$genotipod <- td$genotipo
+
+  # Definição dos índices de validação cruzada
+  val_idx <- fold.list[[r]][[f]]
+  td[val_idx, tr] <- NA
+  
+  # Ajuste do modelo G-BLUP aditivo-dominante
+  fit <- mmes(
+    fixed = as.formula(paste(tr, "~ 1")),
+    random = ~ vsm(ism(genotipo), Gu = K1) + vsm(ism(genotipod), Gu = D1),
+    data = td,
+    rcov = ~ units,
+    tolParInv = ifelse(idx == 29 | idx == 45, 5e-3, 1e-6) # Ajuste de tolerância para a matriz inversa,
+  )
+  
+
+  # Extração dos preditos e verdadeiros valores
+  pred_a <- fit$uList$`vsm(ism(genotipo), Gu = K1`
+  pred_d <- fit$uList$`vsm(ism(genotipod), Gu = D1`
+  
+  # Soma dos preditos aditivos e dominantes
+  pred <- pred_a + pred_d
+  truth <- ph[[tr]]
+  
+  # Predição e métricas
+  pred <- data.frame(pred, ph)
+  
+  # Cálculo dos GEBVs para treino e validação
+  pred_T <- pred[-val_idx, "mu"]
+  truth_T <- pred[[tr]][-val_idx]
+  pred_V <- pred[val_idx, "mu"]
+  truth_V <- pred[[tr]][val_idx]
+  
+  # Criação do dataframe de resultados
+  tibble(
+    Trait = tr,
+    Rep = r,
+    Fold = f,
+    R2_Train = round(cor(pred_T, truth_T), 4),
+    R2_Valid = round(cor(pred_V, truth_V), 4),
+    RMSE_Train = round(sqrt(mean((pred_T - truth_T)^2)), 4),
+    RMSE_Valid = round(sqrt(mean((pred_V - truth_V)^2)), 4),
+    GEBV_T = list(pred_T),
+    GEBV_V = list(pred_V)
+  )
+}
+
+# Finalização do cluster
+stopCluster(cl)
+
+# Salvando os resultados da validação cruzada
+saveRDS(results_cv_GBLUP_ad, file = "output/real_results_cv_GBLUP_ad.rds")
+```
+
+```{r, include=FALSE}
+rm(K, D, results_cv_GBLUP_ad, combos)
+gc()
+```
+
+### 1.3. G-BLUP Aditivo-Dominante-Epistástico
+
+O modelo G-BLUP aditivo-dominante-epistástico estende o G-BLUP aditivo-dominante ao incluir efeitos epistáticos, permitindo capturar interações complexas entre alelos. A matriz de parentesco epistático (E) é utilizada para modelar esses efeitos.
+
+```{r build-K-D-E}
+# Construção das matrizes de parentesco aditivo (K), aditivo-dominante (D) e aditivo-dominante-epistástico (E)
+K <- A.mat(as.matrix(geno))
+D <- D.mat(as.matrix(geno))
+E <- E.mat(as.matrix(geno))
+colnames(K) <- rownames(K) <- rownames(pheno) <- pheno$genotipo
+colnames(D) <- rownames(D) <- rownames(pheno)
+colnames(E) <- rownames(E) <- rownames(pheno)
+```
+
+O G-BLUP aditivo-dominante-epistástico é dada pelo modelo:
+
+\[
+\text{y} = \mu + \text{X}\beta + \text{Z}_a u_a + \text{Z}_d u_d + \text{Z}_e u_e + e
+\]
+
+onde:
+- \(\text{y}\) é o vetor de fenótipos,
+- \(\mu\) é a média geral,
+- \(\text{X}\) é a matriz de efeitos fixos (neste caso, intercepto),
+- \(\beta\) é o vetor de efeitos fixos,
+- \(\text{Z}_a\) é a matriz de efeitos aleatórios aditivos (matriz K),
+- \(u_a\) é o vetor de efeitos aleatórios aditivos (GEBVs aditivos),
+- \(\text{Z}_d\) é a matriz de efeitos aleatórios dominantes (matriz D),
+- \(u_d\) é o vetor de efeitos aleatórios dominantes (GEBVs dominantes),
+- \(\text{Z}_e\) é a matriz de efeitos aleatórios epistáticos (matriz E),
+- \(u_e\) é o vetor de efeitos aleatórios epistáticos (GEBVs epistáticos),
+- \(e\) é o vetor de erros aleatórios.
+
+```{r cv-gblup-ade, message=FALSE, warning=FALSE}
+# Configuração do cluster para paralelização
+cl <- makeCluster(max(1, detectCores() - 1))
+registerDoParallel(cl)
+
+# Combinações de traits, repetições e dobras
+combos <- expand.grid(
+  trait = traits,
+  rep = seq_len(nrept),
+  fold = seq_len(nfolds),
+  stringsAsFactors = FALSE
+)
+
+# Execução da validação cruzada para G-BLUP aditivo-dominante-epistástico
+results_cv_GBLUP_ade <- foreach(
+  idx = seq_len(nrow(combos)),
+  .packages = c("sommer", "dplyr", "tibble"),
+  .combine = bind_rows
+) %dopar% {
+  
+  # Extração dos parâmetros da combinação atual
+  tr <- combos$trait[idx]
+  r <- combos$rep[idx]
+  f <- combos$fold[idx]
+  
+  # Preparação dos dados para o modelo
+  ph <- pheno[,c("genotipo", tr)]
+  K1 <- K[ph$genotipo, ph$genotipo]
+  D1 <- D[ph$genotipo, ph$genotipo]
+  E1 <- E[ph$genotipo, ph$genotipo]
+  
+  # Ajuste dos nomes das colunas e linhas das matrizes K1, D1 e E1
+  colnames(K1) <- rownames(K1) <- ph$genotipo
+  colnames(D1) <- rownames(D1) <- ph$genotipo
+  colnames(E1) <- rownames(E1) <- ph$genotipo
+  
+  # Criação do dataframe para o modelo
+  td <- ph
+  td$genotipod <- td$genotipo
+  td$genotipoe <- td$genotipo
+  
+  # Definição dos índices de validação cruzada
+  val_idx <- fold.list[[r]][[f]]
+  td[val_idx, tr] <- NA
+  
+  # Ajuste do modelo G-BLUP aditivo-dominante-epistástico
+  fit <- mmes(
+    fixed = as.formula(paste(tr, "~ 1")),
+    random = ~ vsm(ism(genotipo), Gu = K1) + vsm(ism(genotipod), Gu = D1) + vsm(ism(genotipoe), Gu = E1) ,
+    data = td,
+    rcov = ~ units,
+    tolParInv = ifelse(idx == 29 | idx == 45, 5e-3, 1e-6) # Ajuste de tolerância para a matriz inversa,
+  )
+  
+  # Extração dos preditos e verdadeiros valores
+  pred_a <- fit$uList$`vsm(ism(genotipo), Gu = K1`
+  pred_d <- fit$uList$`vsm(ism(genotipod), Gu = D1`
+  pred_e <- fit$uList$`vsm(ism(genotipoe), Gu = E1`
+  
+  # Soma dos preditos aditivos, dominantes e epistáticos
+  pred <- pred_a + pred_d + pred_e
+  truth <- ph[[tr]]
+  
+  # Predição e métricas
+  pred <- data.frame(fit$u, ph)
+  
+  # Cálculo dos GEBVs para treino e validação
+  pred_T <- pred[-val_idx, "fit.u"]
+  truth_T <- pred[[tr]][-val_idx]
+  pred_V <- pred[val_idx, "fit.u"]
+  truth_V <- pred[[tr]][val_idx]
+  
+  # Criação do dataframe de resultados
+  tibble(
+    Trait = tr,
+    Rep = r,
+    Fold = f,
+    R2_Train = round(cor(pred_T, truth_T), 4),
+    R2_Valid = round(cor(pred_V, truth_V), 4),
+    RMSE_Train = round(sqrt(mean((pred_T - truth_T)^2)), 4),
+    RMSE_Valid = round(sqrt(mean((pred_V - truth_V)^2)), 4),
+    GEBV_T = list(pred_T),
+    GEBV_V = list(pred_V)
+  )
+}
+
+# Finalização do cluster
+stopCluster(cl)
+
+# Salvando os resultados da validação cruzada
+saveRDS(results_cv_GBLUP_ade, file = "output/real_results_cv_GBLUP_ade.rds")
+```
+
+```{r, include=FALSE}
+rm(K, D, E, results_cv_GBLUP_ade, combos)
+gc()
+```
+
+## 2. MARS
+
+A Multivariate Adaptative Regression Splines (MARS) é uma técnica de modelagem não paramétrica que pode capturar relações complexas entre variáveis preditoras e resposta. Neste estudo, implementamos três variantes do MARS: MARS 1 (grau 1) e MARS 2 (grau 2) e MARS 3 (grau 3) . Ambas as variantes são ajustadas utilizando a função `earth` do pacote `earth`, que é otimizada para lidar com grandes conjuntos de dados.
+
+### 2.1 MARS 1
+
+O modelo MARS 1 é uma versão simplificada que utiliza splines lineares para modelar a relação entre as variáveis preditoras e a resposta. Este modelo é adequado para capturar relações lineares e interações simples entre os marcadores genéticos.
+
+```{r cv-mars1, message=FALSE, warning=FALSE}
+# Precisamos dividir nosso espaço de memoria para não estourar a memoria
+max_workers <- floor(32 / 6.5)    # = 4 workers
+cores_para_usar <- min(max_workers, detectCores() - 1)
+cl <- makeCluster(cores_para_usar)
+registerDoParallel(cl)
+
+# Combinações de traits, repetições e dobras
+combos_mars <- expand.grid(
+  trait = traits,
+  rep = seq_len(nrept),
+  fold = seq_len(nfolds),
+  stringsAsFactors = FALSE
+)
+
+# Execução da validação cruzada para MARS 1
+results_cv_MARS_1 <- foreach(
+  idx = seq_len(nrow(combos_mars)),
+  .packages = c("earth", "dplyr", "tibble"),
+  .combine = bind_rows
+) %dopar% {
+  # Extração dos parâmetros da combinação atual
+  tr <- combos_mars$trait[idx]
+  r <- combos_mars$rep[idx]
+  f <- combos_mars$fold[idx]
+  
+  # Preparação dos dados para o modelo
+  valid_idx <- fold.list[[r]][[f]]
+  train_idx <- setdiff(seq_len(nrow(pheno)), valid_idx)
+  
+  # Criando dados de treinamento e validação
+  yT <- pheno[train_idx, tr][[1]]
+  xT <- as.matrix(geno[train_idx, ])
+  yV <- pheno[valid_idx, tr][[1]]
+  xV <- as.matrix(geno[valid_idx, ])
+  
+  # Ajuste do modelo MARS 1
+  fit <- earth(x = xT, y = yT, degree = 1)
+  
+  # Predição nos conjuntos de treinamento e validação
+  pred_T <- predict(fit, xT)
+  pred_V <- predict(fit, xV)
+  
+  # Extrair importância das variáveis
+  imp <- evimp(fit, trim = FALSE)
+  
+  # Seleciona colunas relevantes e converte para data.frame
+  imp_df <- as.data.frame(imp[, c("rss", "nsubsets")])  # rss: Overall importance
+  
+  # Adiciona informações de repetição e fold, mantendo nomes dos marcadores
+  imp_df$marker <- rownames(imp_df)
+  imp_df$Rep <- r
+  imp_df$Fold <- f
+  
+  # Ajusta nomes das colunas e remove sufixo indesejado dos marcadores
+  imp_df <- imp_df %>%
+    select(Overall = rss, marker, Rep, Fold) %>%
+    mutate(marker = stringr::str_replace_all(marker, "-unused", ""))
+  
+  # Limpeza de memória
+  gc() 
+  
+  # Criação do dataframe de resultados
+  tibble(
+    Trait = tr,
+    Degree = 1,
+    Rep = r,
+    Fold = f,
+    R2_Train = round(cor(pred_T, yT), 4),
+    R2_Valid = round(cor(pred_V, yV), 4),
+    RMSE_Train = round(sqrt(mean(((pred_T - yT)^2))), 4),
+    RMSE_Valid = round(sqrt(mean(((pred_V - yV)^2))), 4),
+    GEBV_T = list(pred_T),
+    GEBV_V = list(pred_V),
+    imp = list(imp_df))
+}
+
+# Finalização do cluster
+stopCluster(cl)
+
+# Salvando os resultados da validação cruzada
+saveRDS(results_cv_MARS_1, file = "output/real_results_cv_MARS_1.rds")
+```
+
+```{r include=FALSE}
+rm(max_workers, cores_para_usar, combos_mars, results_cv_MARS_1)
+```
+
+### 2.2 MARS 2
+
+O modelo MARS 2 é uma versão mais complexa que utiliza splines quadráticos para modelar a relação entre as variáveis preditoras e a resposta. Este modelo é adequado para capturar relações não lineares mais complexas entre os marcadores genéticos.
+
+```{r cv-mars2, message=FALSE, warning=FALSE}
+# Precisamos dividir nosso espaço de memoria para não estourar a memoria
+max_workers <- floor(32 / 6.5)    # = 4 workers
+cores_para_usar <- min(max_workers, detectCores() - 1)
+cl <- makeCluster(cores_para_usar)
+registerDoParallel(cl)
+
+# Combinações de traits, repetições e dobras
+combos_mars <- expand.grid(
+  trait = traits,
+  rep = seq_len(nrept),
+  fold = seq_len(nfolds),
+  stringsAsFactors = FALSE
+)
+
+# Execução da validação cruzada para MARS 2
+results_cv_MARS_2 <- foreach(
+  idx = seq_len(nrow(combos_mars)),
+  .packages = c("earth", "dplyr", "tibble"),
+  .combine = bind_rows
+) %dopar% {
+  # Extração dos parâmetros da combinação atual
+  tr <- combos_mars$trait[idx]
+  r <- combos_mars$rep[idx]
+  f <- combos_mars$fold[idx]
+  
+  # Preparação dos dados para o modelo
+  valid_idx <- fold.list[[r]][[f]]
+  train_idx <- setdiff(seq_len(nrow(pheno)), valid_idx)
+  
+  # Criando dados de treinamento e validação
+  yT <- pheno[train_idx, tr][[1]]
+  xT <- as.matrix(geno[train_idx, ])
+  yV <- pheno[valid_idx, tr][[1]]
+  xV <- as.matrix(geno[valid_idx, ])
+  
+  # Ajuste do modelo MARS 2
+  fit <- earth(x = xT, y = yT, degree = 2)
+  
+  # Predição nos conjuntos de treinamento e validação
+  pred_T <- predict(fit, xT)
+  pred_V <- predict(fit, xV)
+  
+  # Extrair importância das variáveis
+  imp <- evimp(fit, trim = FALSE)
+  
+  # Seleciona colunas relevantes e converte para data.frame
+  imp_df <- as.data.frame(imp[, c("rss", "nsubsets")])  # rss: Overall importance
+  
+  # Adiciona informações de repetição e fold, mantendo nomes dos marcadores
+  imp_df$marker <- rownames(imp_df)
+  imp_df$Rep <- r
+  imp_df$Fold <- f
+  
+  # Ajusta nomes das colunas e remove sufixo indesejado dos marcadores
+  imp_df <- imp_df %>%
+    select(Overall = rss, marker, Rep, Fold) %>%
+    mutate(marker = stringr::str_replace_all(marker, "-unused", ""))
+  
+  # Limpeza de memória
+  gc()  
+  
+  # Criação do dataframe de resultados
+  tibble(
+    Trait = tr,
+    Degree = 2,
+    Rep = r,
+    Fold = f,
+    R2_Train = round(cor(pred_T, yT), 4),
+    R2_Valid = round(cor(pred_V, yV), 4),
+    RMSE_Train = round(sqrt(mean(((pred_T - yT)^2))), 4),
+    RMSE_Valid = round(sqrt(mean(((pred_V - yV)^2))), 4),
+    GEBV_T = list(pred_T),
+    GEBV_V = list(pred_V),
+    imp = list(imp_df)
+  )
+}
+
+# Finalização do cluster
+stopCluster(cl)
+
+# Salvando os resultados da validação cruzada
+saveRDS(results_cv_MARS_2, file = "output/real_results_cv_MARS_2.rds")
+```
+
+```{r include=FALSE}
+rm(max_workers, cores_para_usar, combos_mars, results_cv_MARS_2)
+```
+
+### 2.3 MARS 3
+
+O modelo MARS 3 é uma versão ainda mais complexa que utiliza splines cúbicos para modelar a relação entre as variáveis preditoras e a resposta. Este modelo é adequado para capturar relações não lineares muito complexas entre os marcadores genéticos.
+
+```{r cv-mars3, message=FALSE, warning=FALSE}
+# Precisamos dividir nosso espaço de memoria para não estourar a memoria
+max_workers <- floor(32 / 6.5)    # = 4 workers
+cores_para_usar <- min(max_workers, detectCores() - 1)
+cl <- makeCluster(cores_para_usar)
+registerDoParallel(cl)
+
+# Combinações de traits, repetições e dobras
+combos_mars <- expand.grid(
+  trait = traits,
+  rep = seq_len(nrept),
+  fold = seq_len(nfolds),
+  stringsAsFactors = FALSE
+)
+
+# Execução da validação cruzada para MARS 3
+results_cv_MARS_3 <- foreach(
+  idx = seq_len(nrow(combos_mars)),
+  .packages = c("earth", "dplyr", "tibble"),
+  .combine = bind_rows
+) %dopar% {
+  # Extração dos parâmetros da combinação atual
+  tr <- combos_mars$trait[idx]
+  r <- combos_mars$rep[idx]
+  f <- combos_mars$fold[idx]
+  
+  # Preparação dos dados para o modelo
+  valid_idx <- fold.list[[r]][[f]]
+  train_idx <- setdiff(seq_len(nrow(pheno)), valid_idx)
+  
+  # Criando dados de treinamento e validação
+  yT <- pheno[train_idx, tr][[1]]
+  xT <- as.matrix(geno[train_idx, ])
+  yV <- pheno[valid_idx, tr][[1]]
+  xV <- as.matrix(geno[valid_idx, ])
+  
+  # Ajuste do modelo MARS 3
+  fit <- earth(x = xT, y = yT, degree = 3)
+  
+  # Predição nos conjuntos de treinamento e validação
+  pred_T <- predict(fit, xT)
+  pred_V <- predict(fit, xV)
+
+  # Extrair importância das variáveis
+  imp <- evimp(fit, trim = FALSE)
+  
+  # Seleciona colunas relevantes e converte para data.frame
+  imp_df <- as.data.frame(imp[, c("rss", "nsubsets")])  # rss: Overall importance
+  
+  # Adiciona informações de repetição e fold, mantendo nomes dos marcadores
+  imp_df$marker <- rownames(imp_df)
+  imp_df$Rep <- r
+  imp_df$Fold <- f
+  
+  # Ajusta nomes das colunas e remove sufixo indesejado dos marcadores
+  imp_df <- imp_df %>%
+    select(Overall = rss, marker, Rep, Fold) %>%
+    mutate(marker = stringr::str_replace_all(marker, "-unused", ""))
+  
+  # Limpeza de memória
+  gc()  
+  
+  # Criação do dataframe de resultados
+  tibble(
+    Trait = tr,
+    Degree = 3,
+    Rep = r,
+    Fold = f,
+    R2_Train = round(cor(pred_T, yT), 4),
+    R2_Valid = round(cor(pred_V, yV), 4),
+    RMSE_Train = round(sqrt(mean(((pred_T - yT)^2))), 4),
+    RMSE_Valid = round(sqrt(mean(((pred_V - yV)^2))), 4),
+    GEBV_T = list(pred_T),
+    GEBV_V = list(pred_V),
+    imp = list(imp_df)
+  )
+}
+
+# Finalização do cluster
+stopCluster(cl)
+
+# Salvando os resultados da validação cruzada
+saveRDS(results_cv_MARS_3, file = "output/real_results_cv_MARS_3.rds")
+```
+
+```{r include=FALSE}
+rm(max_workers, cores_para_usar, combos_mars, results_cv_MARS_3)
+```
+
+## 3. Decision Tree
+
+A árvore de decisão é um modelo de aprendizado de máquina que utiliza uma estrutura hierárquica para tomar decisões baseadas em condições lógicas. Neste estudo, utilizamos a função `rpart` do pacote `rpart` para construir árvores de decisão, que são adequadas para capturar relações não lineares entre os marcadores genéticos e os fenótipos.
+
+```{r cv-dt, message=FALSE, warning=FALSE}
+# Configuração do cluster para paralelização
+cl <- makeCluster(max(1, detectCores() - 1))
+registerDoParallel(cl)
+
+# Combinações de traits, repetições e dobras
+combos_dt <- expand.grid(
+  trait = traits,
+  rep = seq_len(nrept),
+  fold = seq_len(nfolds),
+  stringsAsFactors = FALSE
+)
+
+# Execução da validação cruzada para Decision Tree
+results_cv_DT <- foreach(
+  idx      = seq_len(nrow(combos_dt)),
+  .packages = c("rpart", "dplyr", "tibble", "caret"),
+  .combine = bind_rows
+) %dopar% {
+  # Extração dos parâmetros da combinação atual
+  tr <- combos_dt$trait[idx]
+  r <- combos_dt$rep[idx]
+  f <- combos_dt$fold[idx]
+  
+  # Preparação dos dados para o modelo
+  valid_idx <- fold.list[[r]][[f]]
+  train_idx <- setdiff(seq_len(nrow(pheno)), valid_idx)
+  
+  # Criando dados de treinamento e validação
+  yT <- pheno[train_idx, tr][[1]]
+  xT <- as.matrix(geno[train_idx, ])
+  yV <- pheno[valid_idx, tr][[1]]
+  xV <- as.matrix(geno[valid_idx, ])
+  
+  # Ajuste do modelo Decision Tree
+  y <- pheno[[tr]]
+  x <- geno
+  
+  # Ajuste do modelo Decision Tree
+  fit <- rpart(y ~ as.matrix(x), subset = train_idx)
+  
+  # Predição nos conjuntos de treinamento e validação
+  pred_T <- predict(fit)
+  pred_V <- predict(fit, newdata = x)[valid_idx]
+  
+  # Importância das variáveis
+  imp_df <- data.frame(varImp(fit, scale = TRUE, value = "rss"))
+  rownames(imp_df) <- gsub("^as\\.matrix\\(x\\)", "", rownames(imp_df), perl = TRUE)
+  
+  # Adiciona informações de repetição e fold, mantendo nomes dos marcadores
+  imp_df$marker <- rownames(imp_df)
+  imp_df$Rep <- r
+  imp_df$Fold <- f
+  
+  # Limpeza de memória
+  gc()
+  
+  # Criação do dataframe de resultados
+  tibble(
+    Trait = tr,
+    Rep = r,
+    Fold = f,
+    R2_Train = round(cor(pred_T, yT), 3),
+    R2_Valid = round(cor(pred_V, yV), 3),
+    RMSE_Train = round(sqrt(mean((pred_T - yT )^2)), 3),
+    RMSE_Valid = round(sqrt(mean((pred_V - yV)^2)), 3),
+    GEBV_T = list(pred_T),
+    GEBV_V = list(pred_V),
+    imp = list(imp_df)
+  )
+}
+
+stopCluster(cl)
+
+saveRDS(results_cv_DT, file = "output/real_results_cv_DT.rds")
+```
+
+```{r}
+rm(combos_dt, results_cv_DT)
+```
+
+
+## 4. Bagging
+
+```{r cv-bag, message=FALSE, warning=FALSE}
+cl <- makeCluster(max(1, detectCores() - 1))
+registerDoParallel(cl)
+
+combos_bag <- expand.grid(
+  trait = traits,
+  rep = seq_len(nrept),
+  fold = seq_len(nfolds),
+  stringsAsFactors = FALSE
+)
+
+results_cv_Bag <- foreach(
+  idx = seq_len(nrow(combos_bag)),
+  .packages = c("randomForest", "dplyr", "tibble", "caret"),
+  .combine = bind_rows
+) %dopar% {
+  tr <- combos_bag$trait[idx]
+  r <- combos_bag$rep[idx]
+  f <- combos_bag$fold[idx]
+  
+  valid_idx <- fold.list[[r]][[f]]
+  train_idx <- setdiff(seq_len(nrow(pheno)), valid_idx)
+  
+  yT <- pheno[[tr]][train_idx]  # vetor
+  xT <- geno[train_idx, ]
+  yV <- pheno[[tr]][valid_idx]
+  xV <- geno[valid_idx, ]
+  
+  fit <- randomForest(x = xT, y = yT, mtry = ncol(xT))
+
+  pred_T <- predict(fit, xT)
+  pred_V <- predict(fit, xV)
+  
+  imp_df <- data.frame(varImp(fit, scale = TRUE, value = "rss"))
+  # Adiciona informações de repetição e fold, mantendo nomes dos marcadores
+  imp_df$marker <- rownames(imp_df)
+  imp_df$Rep <- r
+  imp_df$Fold <- f
+  
+  gc()
+  
+  tibble(
+    Trait = tr,
+    Rep = r,
+    Fold = f,
+    R2_Train = round(cor(pred_T, yT), 3),
+    R2_Valid = round(cor(pred_V, yV), 3),
+    RMSE_Train = round(sqrt(mean((pred_T - yT)^2)), 3),
+    RMSE_Valid = round(sqrt(mean((pred_V - yV)^2)), 3),
+    GEBV_T = list(pred_T),
+    GEBV_V = list(pred_V),
+    imp = list(imp_df)
+  )
+}
+
+stopCluster(cl)
+
+saveRDS(results_cv_Bag, file = "output/real_results_cv_Bag.rds")
+```
+
+```{r}
+rm(combos_bag, results_cv_Bag)
+```
+
+
+## 5. Random Forest
+
+```{r cv-rf, message=FALSE, warning=FALSE}
+cl <- makeCluster(max(1, detectCores() - 1))
+registerDoParallel(cl)
+
+combos_rf <- expand.grid(
+  trait = traits,
+  rep = seq_len(nrept),
+  fold = seq_len(nfolds),
+  stringsAsFactors = FALSE
+)
+
+results_cv_RF <- foreach(
+  idx = seq_len(nrow(combos_rf)),
+  .packages = c("randomForest", "dplyr", "tibble", "caret"),
+  .combine = bind_rows
+) %dopar% {
+  tr <- combos_rf$trait[idx]
+  r <- combos_rf$rep[idx]
+  f <- combos_rf$fold[idx]
+  
+  valid_idx <- fold.list[[r]][[f]]
+  train_idx <- setdiff(seq_len(nrow(pheno)), valid_idx)
+  
+  yT <- pheno[[tr]][train_idx]  # vetor
+  xT <- geno[train_idx, ]
+  yV <- pheno[[tr]][valid_idx]
+  xV <- geno[valid_idx, ]
+  
+  fit <- randomForest(xT, yT, mtry = floor(ncol(xT) / 3), ntree = 500)
+  
+  pred_T <- predict(fit, xT)
+  pred_V <- predict(fit, xV)
+  
+  imp_df <- data.frame(varImp(fit, scale = TRUE, value = "rss"))
+  # Adiciona informações de repetição e fold, mantendo nomes dos marcadores
+  imp_df$marker <- rownames(imp_df)
+  imp_df$Rep <- r
+  imp_df$Fold <- f
+  
+  gc()
+  
+  tibble(
+    Trait = tr,
+    Rep = r,
+    Fold = f,
+    R2_Train = round(cor(pred_T, yT), 3),
+    R2_Valid = round(cor(pred_V, yV), 3),
+    RMSE_Train = round(sqrt(mean((pred_T - yT)^2)), 3),
+    RMSE_Valid = round(sqrt(mean((pred_V - yV)^2)), 3),
+    GEBV_T = list(pred_T),
+    GEBV_V = list(pred_V),
+    imp = list(imp_df)
+  )
+}
+
+stopCluster(cl)
+
+saveRDS(results_cv_RF, file = "output/real_results_cv_RF.rds")
+```
+
+```{r}
+rm(combos_rf, results_cv_RF)
+```
+
+
+## 6. Boosting (GBM)
+
+```{r cv-gbm, message=FALSE, warning=FALSE}
+cl <- makeCluster(max(1, detectCores() - 1))
+registerDoParallel(cl)
+
+combos_gbm <- expand.grid(
+  trait = traits,
+  rep = seq_len(nrept),
+  fold = seq_len(nfolds),
+  stringsAsFactors = FALSE
+)
+
+results_cv_GBM <- foreach(
+  idx = seq_len(nrow(combos_gbm)),
+  .packages = c("gbm", "dplyr", "tibble", "caret"),
+  .combine = bind_rows
+) %dopar% {
+
+  tr <- combos_gbm$trait[idx]
+  r <- combos_gbm$rep[idx]
+  f <- combos_gbm$fold[idx]
+  
+  valid_idx <- fold.list[[r]][[f]]
+  train_idx <- setdiff(seq_len(nrow(pheno)), valid_idx)
+  
+  yT <- pheno[[tr]][train_idx]  # vetor
+  xT <- geno[train_idx, ]
+  yV <- pheno[[tr]][valid_idx]
+  xV <- geno[valid_idx, ]
+  
+  y <- pheno[[tr]]
+  x <- geno
+  
+  fit <-
+    gbm.fit(
+      x = xT,
+      y = yT,
+      distribution = "gaussian",
+      n.trees = 500,
+      interaction.depth = 2
+    )
+  
+  pred_T <- predict(fit, xT, n.trees = 500)
+  pred_V <- predict(fit, xV, n.trees = 500)
+  
+  imp_df <- data.frame(varImp(fit, scale = TRUE, value = "rss" , numTrees  = 500))
+  # Adiciona informações de repetição e fold, mantendo nomes dos marcadores
+  imp_df$marker <- rownames(imp_df)
+  imp_df$Rep <- r
+  imp_df$Fold <- f
+  
+  gc()
+  
+  tibble(
+    Trait = tr,
+    Rep = r,
+    Fold = f,
+    R2_Train = round(cor(pred_T, yT), 3),
+    R2_Valid = round(cor(pred_V, yV), 3),
+    RMSE_Train = round(sqrt(mean((pred_T - yT)^2)), 3),
+    RMSE_Valid = round(sqrt(mean((pred_V - yV)^2)), 3),
+    GEBV_T = list(pred_T),
+    GEBV_V = list(pred_V),
+    imp = list(imp_df)
+  )
+}
+
+stopCluster(cl)
+
+saveRDS(results_cv_GBM, file = "output/real_results_cv_GBM.rds")
+```
+
+```{r }
+rm(combos_gbm, results_cv_GBM)
+```
+
+
+## 7. Perceptron Multicamadas (PMC)
+
+```{r cv-nn, message=FALSE, warning=FALSE, eval=FALSE}
+cl <- makeCluster(max(1, detectCores() - 1))
+registerDoParallel(cl)
+
+combos_nn <- expand.grid(
+  trait = traits,
+  rep = seq_len(nrept),
+  fold = seq_len(nfolds),
+  h1 = c(1, 2, 4, 8, 16, 32),
+  h2 = c(0, 1, 2, 4, 8, 16, 32),
+  stringsAsFactors = FALSE
+)
+
+
+results_cv_NN <- foreach(
+  idx = seq_len(nrow(combos_nn)),
+  .packages = c("ANN2", "neuralnet", "dplyr", "tibble"),
+  .combine = bind_rows
+) %dopar% {
+
+  tr <- combos_nn$trait[idx]
+  r <- combos_nn$rep[idx]
+  f <- combos_nn$fold[idx]
+  h1 <- combos_nn$h1[idx]
+  h2 <- combos_nn$h2[idx]
+  
+  hidden.layers <- case_when(h2 != 0 ~ c(h1, h2),
+                             TRUE ~ h1)
+  
+  valid_idx <- fold.list[[r]][[f]]
+  train_idx <- setdiff(seq_len(nrow(pheno)), valid_idx)
+  
+  yT <- pheno[[tr]][train_idx]  # vetor
+  xT <- geno[train_idx, ]
+  yV <- pheno[[tr]][valid_idx]
+  xV <- geno[valid_idx, ]
+  
+  # Construção e Treinamento da Rede Neural
+  NN <- neuralnetwork(
+    X = xT,
+    y = yT,
+    hidden.layers = hidden.layers,
+    regression = TRUE,
+    activ.functions = "relu",
+    n.epochs = 500,
+    loss.type = "squared",
+    val.prop = 0
+  )
+  
+  pred_T <- predict(NN, xT)$predictions
+  pred_V <- predict(NN, xV)$predictions
+  
+  tibble(
+    Trait = tr,
+    Rep = r,
+    Fold = f,
+    Hidden_Layers_1 = h1,
+    Hidden_Layers_2 = h2,
+    R2_Train = round(cor(pred_T, yT), 3),
+    R2_Valid = round(cor(pred_V, yV), 3),
+    RMSE_Train = round(sqrt(mean((pred_T - yT)^2)), 3),
+    RMSE_Valid = round(sqrt(mean((pred_V - yV)^2)), 3),
+    GEBV_T = list(pred_T),
+    GEBV_V = list(pred_V)
+  )
+}
+
+stopCluster(cl)
+
+saveRDS(results_cv_NN, file = "output/real_results_cv_NN.rds")
+```
+
+```{r, include=FALSE}
+rm(combos_nn, results_cv_NN)
+gc()
+```
+
+## Resultados Consolidados
+
+```{r results-all, echo=TRUE}
+# Carregar resultados
+results_cv_GBLUP_a <- readRDS("output/real_results_cv_GBLUP_a.rds")
+results_cv_GBLUP_ad <- readRDS("output/real_results_cv_GBLUP_ad.rds")
+results_cv_GBLUP_ade <- readRDS("output/real_results_cv_GBLUP_ade.rds")
+results_cv_MARS_1 <- readRDS("output/real_results_cv_MARS_1.rds")
+results_cv_MARS_2 <- readRDS("output/real_results_cv_MARS_2.rds")
+results_cv_MARS_3 <- readRDS("output/real_results_cv_MARS_3.rds")
+results_cv_DT <- readRDS("output/real_results_cv_DT.rds")
+results_cv_Bag <- readRDS("output/real_results_cv_Bag.rds")
+results_cv_RF <- readRDS("output/real_results_cv_RF.rds")
+results_cv_GBM <- readRDS("output/real_results_cv_GBM.rds")
+results_cv_NN <- readRDS("output/real_results_cv_NN.rds")
+
+# Agrupa por Trait e configuração de neurônios
+resumo_nn <- results_cv_NN %>%
+  group_by(Trait, Hidden_Layers_1, Hidden_Layers_2) %>%
+  summarise(
+    R2_Valid_Mean   = mean(R2_Valid, na.rm = TRUE),
+    R2_Train_Mean   = mean(R2_Train, na.rm = TRUE),
+    RMSE_Valid_Mean = mean(RMSE_Valid, na.rm = TRUE),
+    RMSE_Train_Mean = mean(RMSE_Train, na.rm = TRUE),
+    R2_Valid_SD     = sd(R2_Valid, na.rm = TRUE),
+    R2_Train_SD     = sd(R2_Train, na.rm = TRUE),
+    RMSE_Valid_SD   = sd(RMSE_Valid, na.rm = TRUE),
+    RMSE_Train_SD   = sd(RMSE_Train, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# Exibe os melhores por característica com base no maior R²_Valid
+melhores_config_por_trait <- resumo_nn %>%
+  group_by(Trait) %>%
+  slice_max(order_by = R2_Valid_Mean, n = 1) %>%
+  arrange(Trait)
+
+print(melhores_config_por_trait)
+
+
+# Adicionar coluna Method e combinar todos
+combined_results <- bind_rows(
+  results_cv_GBLUP_a  %>% mutate(Method = "GBLUP_A"),
+  results_cv_GBLUP_ad %>% mutate(Method = "GBLUP_AD"),
+  results_cv_GBLUP_ade %>% mutate(Method = "GBLUP_ADE"),
+  results_cv_MARS_1   %>% mutate(Method = "MARS_1"),
+  results_cv_MARS_2   %>% mutate(Method = "MARS_2"),
+  results_cv_MARS_3   %>% mutate(Method = "MARS_3"),
+  results_cv_DT     %>% mutate(Method = "DT"),
+  results_cv_Bag    %>% mutate(Method = "BAG"),
+  results_cv_RF     %>% mutate(Method = "RF"),
+  results_cv_GBM    %>% mutate(Method = "GBM")
+)
+
+
+# Resumir por Method e Trait
+table_final <- combined_results %>%
+  group_by(Method, Trait) %>%
+  summarise(
+    R2_Valid_Mean   = mean(R2_Valid, na.rm = TRUE),
+    R2_Valid_SD     = sd(R2_Valid, na.rm = TRUE),
+    RMSE_Valid_Mean = mean(RMSE_Valid, na.rm = TRUE),
+    RMSE_Valid_SD   = sd(RMSE_Valid, na.rm = TRUE)
+  ) %>%
+  ungroup() %>% 
+  bind_rows(
+    melhores_config_por_trait %>%
+      mutate(Method = "NN") %>%
+      dplyr::select(Method, Trait, R2_Valid_Mean, R2_Valid_SD, RMSE_Valid_Mean, RMSE_Valid_SD)
+  )
+
+# Exibir tabela consolidada
+table_final %>%
+  arrange(Trait, Method) %>%
+  mutate_if(is.numeric, round, 4) %>%
+  kable(booktabs = TRUE, caption = "Resultados Consolidados por Método e Traço") %>%
+  kable_styling(full_width = FALSE)
+
+writexl::write_xlsx(table_final, "output/real_results_consolidated_10r_3f.xlsx")
+```
