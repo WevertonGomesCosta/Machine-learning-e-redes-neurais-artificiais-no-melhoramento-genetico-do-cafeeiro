@@ -254,9 +254,9 @@ stopifnot(all(as.character(pheno$genotipo) == rownames(geno)))
 ```
 
 ```{r, include=FALSE}
-saveRDS(pheno, file = "data/pheno_real.rds")
-saveRDS(geno, file = "data/geno_real.rds")
-saveRDS(posgeno, file = "data/pos_geno_real.rds")
+saveRDS(pheno, file = "data/dados_reais/pheno_real.rds")
+saveRDS(geno, file = "data/dados_reais/geno_real.rds")
+saveRDS(posgeno, file = "data/dados_reais/pos_geno_real.rds")
 ```
 
 
