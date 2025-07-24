@@ -9,6 +9,18 @@ navbar:
     href: about.html
   - text: License
     href: license.html
+  - text: Dados Reais
+    menu:
+    - text: GWS - Dados Reais
+      href: gws_dados_reais.html
+    - text: GWAS - Dados Reais
+      href: gwas_dados_reais.html
+  - text: Dados Simulados
+    menu:
+    - text: GWS - Dados Simulados
+      href: gws_dados_simulados.html
+    - text: GWAS - Dados Simulados
+      href: gwas_dados_simulados.html
   right:
   - icon: fa-github
     text: Source code
