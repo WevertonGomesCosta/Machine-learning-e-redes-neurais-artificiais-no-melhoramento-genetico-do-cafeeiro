@@ -1,0 +1,774 @@
+---
+title: "Dados Simulados"
+author: 
+  - Costa, W. G.^[Weverton Gomes da Costa, Pós-Doutorando, Departamento de Estatística - Universidade Federal de Viçosa, wevertonufv@gmail.com]
+date: "`r Sys.Date()`"
+site: workflowr::wflow_site
+url: https://wevertongomescosta.github.io/Machine-learning-e-redes-neurais-artificiais-no-melhoramento-genetico-do-cafeeiro//
+output:
+  workflowr::wflow_html:
+    toc: FALSE
+  highlight: github
+editor_options:
+  chunk_output_type: console
+github-repo: wevertongomescosta/Machine-learning-e-redes-neurais-artificiais-no-melhoramento-genetico-do-cafeeiro
+---
+
+
+## Bibliotecas
+
+```{r setup, message=FALSE, warning=FALSE}
+library(cvTools)
+library(kableExtra)
+library(parallel)
+library(doParallel)
+library(foreach)
+library(sommer)
+library(earth)
+library(rpart)
+library(randomForest)
+library(gbm)
+library(neuralnet)
+library(ANN2)
+library(tidyverse)
+library(caret)
+```
+
+## Carregamento dos Dados
+
+### Dados Fenotípicos
+
+```{r load-pheno}
+pheno <- read.table("data/dados_simulados/DG#gen_F2_Vfen.txt", header = FALSE) %>%
+  rownames_to_column(var = "ID") %>%
+  mutate(ID = as.factor(ID))
+```
+
+### Dados Genotípicos
+
+```{r load-geno}
+geno <- read.table("data/dados_simulados/genoma_mapa.txt", header = FALSE)
+colnames(geno) <- 1:ncol(geno)
+geno <- t(geno)
+```
+
+## Preparação para Validação Cruzada
+
+```{r params}
+nfolds <- 5
+nrept  <- 5
+traits <- colnames(pheno)[-1]
+
+set.seed(123)
+# Alinhamento de IDs
+pheno <- pheno[order(pheno$ID), ]
+geno  <- geno[order(rownames(geno)), ]
+stopifnot(all(rownames(geno) == as.character(pheno$ID)))
+
+# Generating fold list
+fold.list <- vector("list", length = nrept)
+for (r in seq_len(nrept)) {
+  folds <- cvFolds(
+    n = nrow(pheno),
+    K = nfolds,
+    R = r,
+    type = "random"
+  )
+  df <- cbind(folds$which, folds$subsets)
+  fold.list[[r]] <- split(df[, 2], df[, 1])
+}
+```
+
+## 1. G-BLUP
+
+```{r build-K}
+K <- A.mat(geno-1)
+```
+
+```{r cv-gblup, message=FALSE, warning=FALSE}
+cl <- makeCluster(max(1, detectCores() - 1))
+registerDoParallel(cl)
+
+combos <- expand.grid(
+  trait = traits,
+  rep = seq_len(nrept),
+  fold = seq_len(nfolds),
+  stringsAsFactors = FALSE
+)
+
+results_cv_GBLUP <- foreach(
+  idx = seq_len(nrow(combos)),
+  .packages = c("sommer", "dplyr", "tibble"),
+  .combine = bind_rows
+) %dopar% {
+  tr <- combos$trait[idx]
+  r <- combos$rep[idx]
+  f <- combos$fold[idx]
+  
+  ph <- pheno[,c("ID", all_of(tr))]
+  K1 <- K[ph$ID, ph$ID]
+  td <- ph
+  val_idx <- fold.list[[r]][[f]]
+  td[val_idx, tr] <- NA
+  
+  fit <- mmes(
+    fixed = as.formula(paste(tr, "~ 1")),
+    random = ~ vsm(ism(ID), Gu = K1),
+    data = td,
+    rcov = ~ units
+  )
+  
+  # Predição e métricas
+  pred <- data.frame(yhat = fit$u + fit$b[[1]], ph)
+  
+  pred_T <- pred[!(pred$ID %in% val_idx), "yhat"]
+  truth_T <- pred[[tr]][!(pred$ID %in% val_idx)]
+  pred_V <- pred[pred$ID %in% val_idx, "yhat"]
+  truth_V <- pred[[tr]][pred$ID %in% val_idx]
+  
+  tibble(
+    Trait = tr,
+    Rep = r,
+    Fold = f,
+    R2_Train = round(cor(pred_T, truth_T), 4),
+    R2_Valid = round(cor(pred_V, truth_V), 4),
+    RMSE_Train = round(sqrt(mean((pred_T - truth_T)^2)), 4),
+    RMSE_Valid = round(sqrt(mean((pred_V - truth_V)^2)), 4),
+    GEBV_T = list(pred_T),
+    GEBV_V = list(pred_V)
+  )
+}
+
+stopCluster(cl)
+
+saveRDS(results_cv_GBLUP, file = "output/results_cv_GBLUP.rds")
+```
+
+## 2. MARS
+
+### 2.1 MARS 1
+
+```{r cv-mars1, message=FALSE, warning=FALSE}
+cl <- makeCluster(max(1, detectCores() - 1))
+registerDoParallel(cl)
+
+combos_mars <- expand.grid(
+  trait = traits,
+  rep = seq_len(nrept),
+  fold = seq_len(nfolds),
+  stringsAsFactors = FALSE
+)
+
+results_cv_MARS_1 <- foreach(
+  idx = seq_len(nrow(combos_mars)),
+  .packages = c("earth", "dplyr", "tibble"),
+  .combine = bind_rows
+) %dopar% {
+  
+  tr <- combos_mars$trait[idx]
+  r <- combos_mars$rep[idx]
+  f <- combos_mars$fold[idx]
+  
+  valid_idx <- fold.list[[r]][[f]]
+  train_idx <- setdiff(seq_len(nrow(pheno)), valid_idx)
+  
+  yT <- pheno[train_idx, tr]
+  xT <- geno[train_idx, ]
+  yV <- pheno[valid_idx, tr]
+  xV <- geno[valid_idx, ]
+  
+  fit <- earth(x = xT, y = yT, degree = 1)
+  
+  pred_T <- predict(fit, xT)
+  pred_V <- predict(fit, xV)
+  
+  # Extrair importância das variáveis
+  imp <- evimp(fit, trim = FALSE)
+  
+  # Seleciona colunas relevantes e converte para data.frame
+  imp_df <- as.data.frame(imp[, c("rss", "nsubsets")])  # rss: Overall importance
+  
+  # Adiciona informações de repetição e fold, mantendo nomes dos marcadores
+  imp_df$marker <- rownames(imp_df)
+  imp_df$Rep <- r
+  imp_df$Fold <- f
+  
+  # Ajusta nomes das colunas e remove sufixo indesejado dos marcadores
+  imp_df <- imp_df %>%
+    select(Overall = rss, marker, Rep, Fold) %>%
+    mutate(marker = stringr::str_replace_all(marker, "-unused", ""))
+   
+  gc() 
+  
+  tibble(
+    Trait = tr,
+    Degree = 1,
+    Rep = r,
+    Fold = f,
+    R2_Train = round(cor(pred_T, yT), 4),
+    R2_Valid = round(cor(pred_V, yV), 4),
+    RMSE_Train = round(sqrt(mean((pred_T - yT)^2)), 4),
+    RMSE_Valid = round(sqrt(mean((pred_V - yV)^2)), 4),
+    GEBV_T = list(pred_T),
+    GEBV_V = list(pred_V),
+    imp = list(imp_df)
+  )
+}
+
+stopCluster(cl)
+
+saveRDS(results_cv_MARS_1, file = "output/results_cv_MARS_1.rds")
+```
+
+### 2.2 MARS 2
+
+```{r cv-mars2, message=FALSE, warning=FALSE}
+cl <- makeCluster(max(1, detectCores() - 1))
+registerDoParallel(cl)
+
+combos_mars <- expand.grid(
+  trait = traits,
+  rep = seq_len(nrept),
+  fold = seq_len(nfolds),
+  stringsAsFactors = FALSE
+)
+
+results_cv_MARS_2 <- foreach(
+  idx = seq_len(nrow(combos_mars)),
+  .packages = c("earth", "dplyr", "tibble"),
+  .combine = bind_rows
+) %dopar% {
+  
+  tr <- combos_mars$trait[idx]
+  r <- combos_mars$rep[idx]
+  f <- combos_mars$fold[idx]
+  
+  valid_idx <- fold.list[[r]][[f]]
+  train_idx <- setdiff(seq_len(nrow(pheno)), valid_idx)
+  
+  yT <- pheno[train_idx, tr]
+  xT <- geno[train_idx, ]
+  yV <- pheno[valid_idx, tr]
+  xV <- geno[valid_idx, ]
+  
+  fit <- earth(x = xT, y = yT, degree = 2)
+  
+  pred_T <- predict(fit, xT)
+  pred_V <- predict(fit, xV)
+  
+  # Extrair importância das variáveis
+  imp <- evimp(fit, trim = FALSE)
+  
+  # Seleciona colunas relevantes e converte para data.frame
+  imp_df <- as.data.frame(imp[, c("rss", "nsubsets")])  # rss: Overall importance
+  
+  # Adiciona informações de repetição e fold, mantendo nomes dos marcadores
+  imp_df$marker <- rownames(imp_df)
+  imp_df$Rep <- r
+  imp_df$Fold <- f
+  
+  # Ajusta nomes das colunas e remove sufixo indesejado dos marcadores
+  imp_df <- imp_df %>%
+    select(Overall = rss, marker, Rep, Fold) %>%
+    mutate(marker = stringr::str_replace_all(marker, "-unused", ""))
+  
+  gc()  
+  
+  tibble(
+    Trait = tr,
+    Degree = 2,
+    Rep = r,
+    Fold = f,
+    R2_Train = round(cor(pred_T, yT), 4),
+    R2_Valid = round(cor(pred_V, yV), 4),
+    RMSE_Train = round(sqrt(mean((pred_T - yT)^2)), 4),
+    RMSE_Valid = round(sqrt(mean((pred_V - yV)^2)), 4),
+    GEBV_T = list(pred_T),
+    GEBV_V = list(pred_V),
+    imp = list(imp_df)
+  )
+}
+
+stopCluster(cl)
+
+saveRDS(results_cv_MARS_2, file = "output/results_cv_MARS_2.rds")
+```
+
+### 2.3 MARS 3
+
+```{r cv-mars3, message=FALSE, warning=FALSE}
+cl <- makeCluster(max(1, detectCores() - 1))
+registerDoParallel(cl)
+
+combos_mars <- expand.grid(
+  trait = traits,
+  rep = seq_len(nrept),
+  fold = seq_len(nfolds),
+  stringsAsFactors = FALSE
+)
+
+results_cv_MARS_3 <- foreach(
+  idx = seq_len(nrow(combos_mars)),
+  .packages = c("earth", "dplyr", "tibble"),
+  .combine = bind_rows
+) %dopar% {
+  
+  tr <- combos_mars$trait[idx]
+  r <- combos_mars$rep[idx]
+  f <- combos_mars$fold[idx]
+  
+  valid_idx <- fold.list[[r]][[f]]
+  train_idx <- setdiff(seq_len(nrow(pheno)), valid_idx)
+  
+  yT <- pheno[train_idx, tr]
+  xT <- geno[train_idx, ]
+  yV <- pheno[valid_idx, tr]
+  xV <- geno[valid_idx, ]
+  
+  fit <- earth(x = xT, y = yT, degree = 3)
+  
+  pred_T <- predict(fit, xT)
+  pred_V <- predict(fit, xV)
+  
+  # Extrair importância das variáveis
+  imp <- evimp(fit, trim = FALSE)
+  
+  # Seleciona colunas relevantes e converte para data.frame
+  imp_df <- as.data.frame(imp[, c("rss", "nsubsets")])  # rss: Overall importance
+  
+  # Adiciona informações de repetição e fold, mantendo nomes dos marcadores
+  imp_df$marker <- rownames(imp_df)
+  imp_df$Rep <- r
+  imp_df$Fold <- f
+  
+  # Ajusta nomes das colunas e remove sufixo indesejado dos marcadores
+  imp_df <- imp_df %>%
+    select(Overall = rss, marker, Rep, Fold) %>%
+    mutate(marker = stringr::str_replace_all(marker, "-unused", ""))
+  
+  gc()  
+  
+  tibble(
+    Trait = tr,
+    Degree = 3,
+    Rep = r,
+    Fold = f,
+    R2_Train = round(cor(pred_T, yT), 4),
+    R2_Valid = round(cor(pred_V, yV), 4),
+    RMSE_Train = round(sqrt(mean((pred_T - yT)^2)), 4),
+    RMSE_Valid = round(sqrt(mean((pred_V - yV)^2)), 4),
+    GEBV_T = list(pred_T),
+    GEBV_V = list(pred_V),
+    imp = list(imp_df)
+  )
+}
+
+stopCluster(cl)
+
+saveRDS(results_cv_MARS_3, file = "output/results_cv_MARS_3.rds")
+```
+
+## 3. Decision Tree
+
+```{r cv-dt, message=FALSE, warning=FALSE}
+cl <- makeCluster(max(1, detectCores() - 1))
+registerDoParallel(cl)
+
+combos_dt <- expand.grid(
+  trait = traits,
+  rep = seq_len(nrept),
+  fold = seq_len(nfolds),
+  stringsAsFactors = FALSE
+)
+
+results_cv_DT <- foreach(
+  idx = seq_len(nrow(combos_dt)),
+  .packages = c("rpart", "dplyr", "tibble", "caret"),
+  .combine = bind_rows
+) %dopar% {
+  tr <- combos_dt$trait[idx]
+  r <- combos_dt$rep[idx]
+  f <- combos_dt$fold[idx]
+  
+  valid_idx <- fold.list[[r]][[f]]
+  train_idx <- setdiff(seq_len(nrow(pheno)), valid_idx)
+  
+  yT <- pheno[[tr]][train_idx]  # vetor
+  xT <- data.frame(geno[train_idx, ])
+  yV <- pheno[[tr]][valid_idx]
+  xV <- data.frame(geno[valid_idx, ])
+  
+  fit <- rpart(yT ~ ., data = xT)
+  
+  pred_T <- predict(fit, xT)
+  pred_V <- predict(fit, xV)
+  
+  imp_df <- data.frame(varImp(fit, scale = TRUE, value = "rss"))
+  # Adiciona informações de repetição e fold, mantendo nomes dos marcadores
+  imp_df$marker <- rownames(imp_df)
+  imp_df$Rep <- r
+  imp_df$Fold <- f
+  
+  gc()
+  
+  tibble(
+    Trait = tr,
+    Rep = r,
+    Fold = f,
+    R2_Train = round(cor(pred_T, yT), 3),
+    R2_Valid = round(cor(pred_V, yV), 3),
+    RMSE_Train = round(sqrt(mean((pred_T - yT)^2)), 3),
+    RMSE_Valid = round(sqrt(mean((pred_V - yV)^2)), 3),
+    GEBV_T = list(pred_T),
+    GEBV_V = list(pred_V),
+    imp = list(imp_df)
+  )
+}
+
+stopCluster(cl)
+
+saveRDS(results_cv_DT, file = "output/results_cv_DT.rds")
+```
+
+## 4. Bagging
+
+```{r cv-bag, message=FALSE, warning=FALSE}
+cl <- makeCluster(max(1, detectCores() - 1))
+registerDoParallel(cl)
+
+combos_bag <- expand.grid(
+  trait = traits,
+  rep = seq_len(nrept),
+  fold = seq_len(nfolds),
+  stringsAsFactors = FALSE
+)
+
+results_cv_Bag <- foreach(
+  idx = seq_len(nrow(combos_bag)),
+  .packages = c("randomForest", "dplyr", "tibble", "caret"),
+  .combine = bind_rows
+) %dopar% {
+  tr <- combos_bag$trait[idx]
+  r <- combos_bag$rep[idx]
+  f <- combos_bag$fold[idx]
+  
+  valid_idx <- fold.list[[r]][[f]]
+  train_idx <- setdiff(seq_len(nrow(pheno)), valid_idx)
+  
+  yT <- pheno[[tr]][train_idx]  # vetor
+  xT <- geno[train_idx, ]
+  yV <- pheno[[tr]][valid_idx]
+  xV <- geno[valid_idx, ]
+  
+  fit <- randomForest(x = xT, y = yT, mtry = ncol(xT))
+
+  pred_T <- predict(fit, xT)
+  pred_V <- predict(fit, xV)
+  
+  imp_df <- data.frame(varImp(fit, scale = TRUE, value = "rss"))
+  # Adiciona informações de repetição e fold, mantendo nomes dos marcadores
+  imp_df$marker <- rownames(imp_df)
+  imp_df$Rep <- r
+  imp_df$Fold <- f
+  
+  gc()
+  
+  tibble(
+    Trait = tr,
+    Rep = r,
+    Fold = f,
+    R2_Train = round(cor(pred_T, yT), 3),
+    R2_Valid = round(cor(pred_V, yV), 3),
+    RMSE_Train = round(sqrt(mean((pred_T - yT)^2)), 3),
+    RMSE_Valid = round(sqrt(mean((pred_V - yV)^2)), 3),
+    GEBV_T = list(pred_T),
+    GEBV_V = list(pred_V),
+    imp = list(imp_df)
+  )
+}
+
+stopCluster(cl)
+
+saveRDS(results_cv_Bag, file = "output/results_cv_Bag.rds")
+```
+
+## 5. Random Forest
+
+```{r cv-rf, message=FALSE, warning=FALSE}
+cl <- makeCluster(max(1, detectCores() - 1))
+registerDoParallel(cl)
+
+combos_rf <- expand.grid(
+  trait = traits,
+  rep = seq_len(nrept),
+  fold = seq_len(nfolds),
+  stringsAsFactors = FALSE
+)
+
+results_cv_RF <- foreach(
+  idx = seq_len(nrow(combos_rf)),
+  .packages = c("randomForest", "dplyr", "tibble", "caret"),
+  .combine = bind_rows
+) %dopar% {
+  tr <- combos_rf$trait[idx]
+  r <- combos_rf$rep[idx]
+  f <- combos_rf$fold[idx]
+  
+  valid_idx <- fold.list[[r]][[f]]
+  train_idx <- setdiff(seq_len(nrow(pheno)), valid_idx)
+  
+  yT <- pheno[[tr]][train_idx]  # vetor
+  xT <- geno[train_idx, ]
+  yV <- pheno[[tr]][valid_idx]
+  xV <- geno[valid_idx, ]
+  
+  fit <- randomForest(xT, yT, mtry = floor(ncol(xT) / 3), ntree = 500)
+  
+  pred_T <- predict(fit, xT)
+  pred_V <- predict(fit, xV)
+  
+  imp_df <- data.frame(varImp(fit, scale = TRUE, value = "rss"))
+  # Adiciona informações de repetição e fold, mantendo nomes dos marcadores
+  imp_df$marker <- rownames(imp_df)
+  imp_df$Rep <- r
+  imp_df$Fold <- f
+  
+  gc()
+  
+  tibble(
+    Trait = tr,
+    Rep = r,
+    Fold = f,
+    R2_Train = round(cor(pred_T, yT), 3),
+    R2_Valid = round(cor(pred_V, yV), 3),
+    RMSE_Train = round(sqrt(mean((pred_T - yT)^2)), 3),
+    RMSE_Valid = round(sqrt(mean((pred_V - yV)^2)), 3),
+    GEBV_T = list(pred_T),
+    GEBV_V = list(pred_V),
+    imp = list(imp_df)
+  )
+}
+
+stopCluster(cl)
+
+saveRDS(results_cv_RF, file = "output/results_cv_RF.rds")
+```
+
+## 6. Boosting (GBM)
+
+```{r cv-gbm, message=FALSE, warning=FALSE}
+cl <- makeCluster(max(1, detectCores() - 1))
+registerDoParallel(cl)
+
+combos_gbm <- expand.grid(
+  trait = traits,
+  rep = seq_len(nrept),
+  fold = seq_len(nfolds),
+  stringsAsFactors = FALSE
+)
+
+results_cv_GBM <- foreach(
+  idx = seq_len(nrow(combos_gbm)),
+  .packages = c("gbm", "dplyr", "tibble", "caret"),
+  .combine = bind_rows
+) %dopar% {
+  tr <- combos_gbm$trait[idx]
+  r <- combos_gbm$rep[idx]
+  f <- combos_gbm$fold[idx]
+  
+  valid_idx <- fold.list[[r]][[f]]
+  train_idx <- setdiff(seq_len(nrow(pheno)), valid_idx)
+  
+  yT <- pheno[[tr]][train_idx]  # vetor
+  xT <- geno[train_idx, ]
+  yV <- pheno[[tr]][valid_idx]
+  xV <- geno[valid_idx, ]
+  
+  fit <- gbm(
+    yT ~ .,
+    data = data.frame(yT, xT),
+    distribution = "gaussian",
+    n.trees = 500,
+    interaction.depth = 2
+  )
+  
+  pred_T <- predict(fit, data.frame(xT), n.trees = 500)
+  pred_V <- predict(fit, data.frame(xV), n.trees = 500)
+  
+  imp_df <- data.frame(varImp(fit, scale = TRUE, value = "rss" , numTrees  = 500))
+  # Adiciona informações de repetição e fold, mantendo nomes dos marcadores
+  imp_df$marker <- rownames(imp_df)
+  imp_df$Rep <- r
+  imp_df$Fold <- f
+  
+  gc()
+  
+  tibble(
+    Trait = tr,
+    Rep = r,
+    Fold = f,
+    R2_Train = round(cor(pred_T, yT), 3),
+    R2_Valid = round(cor(pred_V, yV), 3),
+    RMSE_Train = round(sqrt(mean((pred_T - yT)^2)), 3),
+    RMSE_Valid = round(sqrt(mean((pred_V - yV)^2)), 3),
+    GEBV_T = list(pred_T),
+    GEBV_V = list(pred_V),
+    imp = list(imp_df)
+  )
+}
+
+stopCluster(cl)
+
+saveRDS(results_cv_GBM, file = "output/results_cv_GBM.rds")
+```
+
+## 7. Perceptron Multicamadas (PMC)
+
+```{r cv-nn, message=FALSE, warning=FALSE}
+cl <- makeCluster(max(1, detectCores() - 1))
+registerDoParallel(cl)
+
+combos_nn <- expand.grid(
+  trait = traits,
+  rep = seq_len(nrept),
+  fold = seq_len(nfolds),
+  h1 = c(1, 2, 4, 8, 16, 32),
+  h2 = c(0, 1, 2, 4, 8, 16, 32),
+  stringsAsFactors = FALSE
+)
+
+
+results_cv_NN <- foreach(
+  idx = seq_len(nrow(combos_nn)),
+  .packages = c("ANN2", "neuralnet", "dplyr", "tibble"),
+  .combine = bind_rows
+) %dopar% {
+
+  tr <- combos_nn$trait[idx]
+  r <- combos_nn$rep[idx]
+  f <- combos_nn$fold[idx]
+  h1 <- combos_nn$h1[idx]
+  h2 <- combos_nn$h2[idx]
+  
+  hidden.layers <- case_when(h2 != 0 ~ c(h1, h2),
+                             TRUE ~ h1)
+  
+  valid_idx <- fold.list[[r]][[f]]
+  train_idx <- setdiff(seq_len(nrow(pheno)), valid_idx)
+  
+  yT <- pheno[[tr]][train_idx]  # vetor
+  xT <- geno[train_idx, ]
+  yV <- pheno[[tr]][valid_idx]
+  xV <- geno[valid_idx, ]
+  
+  # Construção e Treinamento da Rede Neural
+  NN <- neuralnetwork(
+    X = xT,
+    y = yT,
+    hidden.layers = hidden.layers,
+    regression = TRUE,
+    activ.functions = "relu",
+    n.epochs = 500,
+    loss.type = "squared",
+    val.prop = 0
+  )
+  
+  pred_T <- predict(NN, xT)$predictions
+  pred_V <- predict(NN, xV)$predictions
+  
+  tibble(
+    Trait = tr,
+    Rep = r,
+    Fold = f,
+    Hidden_Layers_1 = h1,
+    Hidden_Layers_2 = h2,
+    R2_Train = round(cor(pred_T, yT), 3),
+    R2_Valid = round(cor(pred_V, yV), 3),
+    RMSE_Train = round(sqrt(mean((pred_T - yT)^2)), 3),
+    RMSE_Valid = round(sqrt(mean((pred_V - yV)^2)), 3),
+    GEBV_T = list(pred_T),
+    GEBV_V = list(pred_V)
+  )
+}
+
+stopCluster(cl)
+
+saveRDS(results_cv_NN, file = "output/results_cv_NN.rds")
+```
+
+
+## Resultados Consolidados
+
+```{r results-all, echo=TRUE}
+# Carregar resultados
+results_cv_GBLUP <- readRDS("output/results_cv_GBLUP.rds")
+results_cv_MARS_1 <- readRDS("output/results_cv_MARS_1.rds")
+results_cv_MARS_2 <- readRDS("output/results_cv_MARS_2.rds")
+results_cv_MARS_3 <- readRDS("output/results_cv_MARS_3.rds")
+results_cv_DT <- readRDS("output/results_cv_DT.rds")
+results_cv_Bag <- readRDS("output/results_cv_Bag.rds")
+results_cv_RF <- readRDS("output/results_cv_RF.rds")
+results_cv_GBM <- readRDS("output/results_cv_GBM.rds")
+results_cv_NN <- readRDS("output/results_cv_NN.rds")
+  
+
+# Agrupa por Trait e configuração de neurônios
+resumo_nn <- results_cv_NN %>%
+  group_by(Trait, Hidden_Layers_1, Hidden_Layers_2) %>%
+  summarise(
+    R2_Valid_Mean   = mean(R2_Valid, na.rm = TRUE),
+    R2_Train_Mean   = mean(R2_Train, na.rm = TRUE),
+    RMSE_Valid_Mean = mean(RMSE_Valid, na.rm = TRUE),
+    RMSE_Train_Mean = mean(RMSE_Train, na.rm = TRUE),
+    R2_Valid_SD     = sd(R2_Valid, na.rm = TRUE),
+    R2_Train_SD     = sd(R2_Train, na.rm = TRUE),
+    RMSE_Valid_SD   = sd(RMSE_Valid, na.rm = TRUE),
+    RMSE_Train_SD   = sd(RMSE_Train, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# Exibe os melhores por característica com base no maior R²_Valid
+melhores_config_por_trait <- resumo_nn %>%
+  group_by(Trait) %>%
+  slice_max(order_by = R2_Valid_Mean, n = 1) %>%
+  arrange(Trait)
+
+print(melhores_config_por_trait)
+
+
+# Adicionar coluna Method e combinar todos
+combined_results <- bind_rows(
+  results_cv_GBLUP  %>% mutate(Method = "GBLUP"),
+  results_cv_MARS_1   %>% mutate(Method = "MARS_1"),
+  results_cv_MARS_2   %>% mutate(Method = "MARS_2"),
+  results_cv_MARS_3   %>% mutate(Method = "MARS_3"),
+  results_cv_DT     %>% mutate(Method = "DT"),
+  results_cv_Bag    %>% mutate(Method = "BAG"),
+  results_cv_RF     %>% mutate(Method = "RF"),
+  results_cv_GBM    %>% mutate(Method = "GBM")
+)
+
+
+# Resumir por Method e Trait
+table_final <- combined_results %>%
+  group_by(Method, Trait) %>%
+  summarise(
+    R2_Valid_Mean   = mean(R2_Valid, na.rm = TRUE),
+    R2_Valid_SD     = sd(R2_Valid, na.rm = TRUE),
+    RMSE_Valid_Mean = mean(RMSE_Valid, na.rm = TRUE),
+    RMSE_Valid_SD   = sd(RMSE_Valid, na.rm = TRUE)
+  ) %>%
+  ungroup() %>% 
+  bind_rows(
+    melhores_config_por_trait %>%
+      mutate(Method = "NN") %>%
+      dplyr::select(Method, Trait, R2_Valid_Mean, R2_Valid_SD, RMSE_Valid_Mean, RMSE_Valid_SD)
+  )
+
+# Exibir tabela consolidada
+table_final %>%
+  arrange(Trait, Method) %>%
+  mutate_if(is.numeric, round, 4) %>%
+  kable(booktabs = TRUE, caption = "Resultados Consolidados por Método e Traço") %>%
+  kable_styling(full_width = FALSE)
+```
