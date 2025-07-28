@@ -24,6 +24,7 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 Este script realiza uma análise de associação genômica ampla (GWAS) utilizando o pacote GAPIT em R. Ele carrega dados fenotípicos e genotípicos reais, prepara os dados para análise e executa modelos de GWAS para cada combinação de traço e modelo especificado. Os resultados são salvos em um arquivo RDS.
 
 ```{r packages, message=FALSE, warning=FALSE}
+library(kableExtra) # Para tabelas
 library(GAPIT) # Para análise de associação genômica ampla (GWAS)
 library(sommer) # Para modelos mistos e análise de variância
 library(tidyverse) # Para manipulação de dados
