@@ -9,3 +9,15 @@ real_lddecay.tiff
 manhattan_BM.tiff
 manhattan_Prod.Cor.tiff
 manhattan_Cer.tiff
+gwas_combined_results.rds
+gwas_results.rds
+importance_ML.rds
+importance_ML_mean.rds
+mod.RDS
+plot_lddecay.Rda
+pred_mod.RDS
+res.RDS
+results_cv_GBLUP_a.rds
+results_cv_GBLUP_ad.rds
+results_cv_GBLUP_ade.rds
+simulated_results_consolidated.xlsx
