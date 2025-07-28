@@ -86,7 +86,8 @@ head(GM)
 
 ```{r include = FALSE}
 traits <- names(pheno)[2:(ncol(pheno) - 1)]
-models <- c("GLM", "MLM", "CMLM", "MLMM", "SUPER", "FarmCPU", "Blink")
+models_gwas <- c("GLM", "MLM", "CMLM", "MLMM", "SUPER", "FarmCPU", "Blink")
+models_ML <- c("MARS_1", "MARS_2", "MARS_3", "DT", "Bag", "RF", "GBM")
 ```
 
 ## 3. Desequilibrio de Ligação
@@ -265,7 +266,7 @@ p <- p +
 print(p)
 ```
 
-```{r plot-ld-save, include = FALSE, eval = FALSE}
+```{r plot-ld-save, include = FALSE}
 ggsave(filename = "output/real_lddecay.tiff", plot = p, width = 12, height = 8, dpi = 600)
 ```
 
@@ -279,7 +280,7 @@ Os modelos GLM (General Linear Model), MLM (Mixed Linear Model), CMLM (Compresse
 
 ```{r prepare-data-gwas}
 # Definir modelos do GAPIT a serem avaliados
-models <- c("GLM", "MLM", "CMLM", "MLMM", "SUPER", "FarmCPU", "Blink")
+models_gwas <- c("GLM", "MLM", "CMLM", "MLMM", "SUPER", "FarmCPU", "Blink")
 ```
 
 ### 4.1 Loop para executar GAPIT em paralelo
@@ -296,7 +297,7 @@ registerDoParallel(cl)
 
 # Criar combinações de traits e modelos
 combos <- expand.grid(trait = traits,
-                      model = models,
+                      model = models_gwas,
                       stringsAsFactors = FALSE) %>% as_tibble()
 
 # Loop paralelo: executar GAPIT para cada combinação
@@ -401,11 +402,11 @@ flatten_importance <- function(path, model_name) {
 }
 
 # Vetores de arquivos e nomes
-models <- c("MARS_1", "MARS_2", "MARS_3", "DT", "Bag", "RF", "GBM")
-paths  <- paste0("output/real_results_cv_", models, ".rds")
+models_ML <- c("MARS_1", "MARS_2", "MARS_3", "DT", "Bag", "RF", "GBM")
+paths  <- paste0("output/real_results_cv_", models_ML, ".rds")
 
 # Combina todas as tabelas num único data.frame
-imp_ML <- map2_dfr(paths, models, flatten_importance)
+imp_ML <- map2_dfr(paths, models_ML, flatten_importance)
 # Salvar resultados de importância
 saveRDS(imp_ML, file = "output/importance_ML.rds")
 ```
@@ -506,25 +507,25 @@ threshold_01 <- alpha / n.markers
 
 # Filtrando resultados significativos
 results_cv_GAPIT_sig_05 <- plot_data %>%
-  filter(model%in% models) %>%
+  filter(model%in% models_gwas) %>%
   filter(-log10(P.value) > -log10(threshold_01)) %>%
   mutate(sig = paste(trait, SNP, sep = "_")) %>%
   droplevels()
 
 results_cv_GAPIT_sig_01 <- plot_data %>%
-  filter(model %in% models) %>%
+  filter(model %in% models_gwas) %>%
   filter(-log10(P.value) > -log10(threshold_01)) %>%
   mutate(sig = paste(trait, SNP, sep = "_")) %>%
   droplevels()
 
 results_cv_imp_ml_sig_05 <- plot_data %>% 
-  filter(!(model %in% models)) %>%
+  filter(model %in% models_ML) %>%
   filter(effect_res > -log10(threshold_05)) %>%
   mutate(sig = paste(trait, SNP, sep = "_")) %>%
   droplevels()
 
 results_cv_imp_ml_sig_01 <- plot_data %>%
-  filter(!(model %in% models)) %>%
+  filter(model %in% models_ML) %>%
   filter(effect_res > -log10(threshold_01)) %>%
   mutate(sig = paste(trait, SNP, sep = "_")) %>%
   droplevels()
@@ -555,7 +556,7 @@ for (i in traits) {
   
   # GWAS
   figure_gwas <- plotgwasall %>%
-    filter(model %in% models) %>%
+    filter(model %in% models_gwas) %>%
     ggplot(aes(x = index, y = -log10(P.value), color = Chr)) +
     geom_point(alpha = 0.5, size = 1) +
     geom_hline(yintercept = -log10(threshold_05), linetype = "dashed", color = "red") +
@@ -569,7 +570,7 @@ for (i in traits) {
 
   # ML
   figure_ML <- plotgwasall %>%
-    filter(!(model %in% models)) %>%
+    filter(model %in% models_ML) %>%
     ggplot(aes(x = index, y = effect_res, color = Chr)) +
     geom_point(alpha = 0.5, size = 1) +
     geom_hline(yintercept = -log10(threshold_05), linetype = "dashed", color = "red") +
@@ -616,10 +617,32 @@ for (i in traits) {
 
 ```{r include = FALSE}
 snp <- results_cv_imp_ml_sig_01 %>% 
-  filter(model != "DT") %>% 
   group_by(trait, SNP) %>%
   summarise(n = n(), .groups = "drop") %>%
   arrange(desc(n))
+
+snp %>%
+  kable(booktabs = TRUE) %>%
+  kable_styling(full_width = FALSE)
+
+snp_model <- results_cv_imp_ml_sig_01 %>% 
+  group_by(model, trait) %>%
+  summarise(n = n(), .groups = "drop") %>%
+  arrange(desc(n))
+
+snp_model %>%
+  kable(booktabs = TRUE) %>%
+  kable_styling(full_width = FALSE)
+
+snp_trait_model <- results_cv_imp_ml_sig_01 %>% 
+  group_by(model, trait, SNP) %>%
+  summarise(n = n(), .groups = "drop") %>%
+  arrange(desc(n))
+
+snp_trait_model %>%
+  filter(SNP == "chr2:5400524") %>% 
+  kable(booktabs = TRUE) %>%
+  kable_styling(full_width = FALSE)
 ```
 
 ## 8. Resultados
