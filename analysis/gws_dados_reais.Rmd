@@ -48,7 +48,7 @@ Os dados fenotípicos foram obtidos a partir de um arquivo Excel contendo inform
 ```{r load-pheno}
 # Carregar os dados fenotípicos
 dados <- readxl::read_xlsx("data/dados_reais/dados_cafe.xlsx")
-head(dados)
+head(dados[1:4])
 ```
 
 ### 1.2 Rotulos dos Indivíduos 
@@ -191,7 +191,7 @@ head(ind_geno)
 dados <- dados %>% 
   left_join(ind_geno[,c("ID", "genotipo")])
 
-head(dados)
+head(dados[1:4])
 ```
 
 ### 1.3 Dados Genotípicos - VCF
@@ -1063,6 +1063,17 @@ results_cv_DT <- foreach(
   imp_df$marker <- rownames(imp_df)
   imp_df$Rep <- r
   imp_df$Fold <- f
+  
+  # Cria dataframe com a importância das variáveis para os marcadores não selecionados na arvore
+  imp_df_setdiff <- data.frame(
+    Overall = 0,
+    marker = setdiff(colnames(x), imp_df$marker),
+    Rep = r,
+    Fold = f
+  )
+  
+  imp_df <- imp_df %>%
+    full_join(imp_df_setdiff)
   
   # Limpeza de memória
   gc()
