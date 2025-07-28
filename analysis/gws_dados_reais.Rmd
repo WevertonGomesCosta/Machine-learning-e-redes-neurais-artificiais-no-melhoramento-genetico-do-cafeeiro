@@ -8,6 +8,7 @@ url: https://wevertongomescosta.github.io/Machine-learning-e-redes-neurais-artif
 output:
   workflowr::wflow_html:
     toc: TRUE
+    toc.float: TRUE
   highlight: github
 editor_options:
   chunk_output_type: console
@@ -22,7 +23,7 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 
 Este documento apresenta a implementação de modelos mistos para seleção genômica ampla (GWS) utilizando dados reais de Coffea arabica. 
 
-```{r setup, message=FALSE, warning=FALSE}
+```{r packages, message=FALSE, warning=FALSE}
 library(cvTools) # Para validação cruzada
 library(kableExtra) # Para tabelas
 library(parallel) # Para paralelização
@@ -402,6 +403,7 @@ results_cv_GBLUP_a <- foreach(
   .packages = c("sommer", "dplyr", "tibble"),
   .combine = bind_rows
 ) %dopar% {
+  idx=3
   # Extração dos parâmetros da combinação atual
   tr <- combos$trait[idx]
   r <- combos$rep[idx]
@@ -439,9 +441,9 @@ results_cv_GBLUP_a <- foreach(
   pred <- data.frame(fit$u, ph)
   
   # Cálculo dos GEBVs para treino e validação
-  pred_T <- pred[-val_idx, "mu"]
+  pred_T <- pred[-val_idx, "fit.u"]
   truth_T <- pred[[tr]][-val_idx]
-  pred_V <- pred[val_idx, "mu"]
+  pred_V <- pred[val_idx, "fit.u"]
   truth_V <- pred[[tr]][val_idx]
   
   # Criação do dataframe de resultados
@@ -1190,6 +1192,7 @@ results_cv_RF <- foreach(
   .packages = c("randomForest", "dplyr", "tibble", "caret"),
   .combine = bind_rows
 ) %dopar% {
+
   tr <- combos_rf$trait[idx]
   r <- combos_rf$rep[idx]
   f <- combos_rf$fold[idx]
@@ -1481,9 +1484,11 @@ table_final %>%
 writexl::write_xlsx(table_final, "output/real_results_consolidated_10r_3f.xlsx")
 ```
 
-Os resultados mostraram que o modelo GBLUP_ADE obteve o melhor desempenho em termos de R² e RMSE para a maioria dos traços, seguido pelo modelo MARS_3. O modelo MARS_1 apresentou desempenho inferior, especialmente em traços com alta complexidade genética. O Decision Tree e o Bagging também mostraram resultados competitivos, enquanto o Random Forest teve um desempenho semelhante ao GBLUP_ADE. O Boosting (GBM) e o Perceptron Multicamadas (PMC) apresentaram resultados variados, dependendo do traço analisado.
+Nenhum método se sobressaiu em todas as características. Os ensembles de árvores (GBM, BAG, RF) ofereceram consistência e os menores erros médios em BM e Cer, mas não capturaram a variabilidade genética (R² negativas). As redes neurais, por sua vez, foram as únicas a gerar R² positivas em todos os traços, porém sacrificaram precisão, refletida em RMSE elevados. Os modelos GBLUP apresentaram acurácia limitada e alto erro em todas as análises. Esses resultados sugerem que combinações de abordagens — por exemplo, integrando as previsões de árvores e redes neurais ou incorporando covariáveis genômicas adicionais — podem ser necessárias para otimizar a seleção genômica em Coffea arabica.
+
 
 ## 5. Conclusão
 
-Neste estudo, avaliamos o desempenho de diferentes métodos de predição genômica em um conjunto de dados real de _Cofea arabica_ Os resultados mostraram que o GBLUP_ADE foi o método mais eficaz, seguido pelo MARS_3. O Decision Tree e o Bagging também se destacaram, enquanto o Random Forest teve desempenho semelhante ao GBLUP_ADE. O Boosting (GBM) e o Perceptron Multicamadas (PMC) apresentaram resultados variados, dependendo do traço analisado.
+Neste estudo, avaliamos o desempenho de diferentes métodos de predição genômica em um conjunto de dados real de _Cofea arabica_.
+Os resultados indicam que não há um único método que se destaque em todas as características fenotípicas. Os ensembles de árvores, como GBM, BAG e RF, mostraram-se consistentes e com menores erros médios, mas falharam em capturar a variabilidade genética. As redes neurais foram as únicas a gerar R² positivos em todos os traços, embora com RMSE elevados. Os modelos GBLUP apresentaram acurácia limitada e alto erro.
 
