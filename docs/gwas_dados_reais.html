@@ -1,0 +1,1625 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Costa, W. G." />
+
+<meta name="date" content="2025-07-28" />
+
+<title>GWAS - Dados Reais</title>
+
+<script src="site_libs/header-attrs-2.29/header-attrs.js"></script>
+<script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/flatly.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/jqueryui-1.13.2/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/font-awesome-6.5.2/css/all.min.css" rel="stylesheet" />
+<link href="site_libs/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet" />
+
+<link rel="icon" href="https://github.com/workflowr/workflowr-assets/raw/main/img/reproducible.png">
+<!-- Add a small amount of space between sections. -->
+<style type="text/css">
+div.section {
+  padding-top: 12px;
+}
+</style>
+
+
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+
+
+<style type="text/css">
+  code {
+    white-space: pre;
+  }
+  .sourceCode {
+    overflow: visible;
+  }
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; } /* Alert */
+code span.an { color: #008000; } /* Annotation */
+code span.at { } /* Attribute */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #0000ff; } /* ControlFlow */
+code span.ch { color: #008080; } /* Char */
+code span.cn { } /* Constant */
+code span.co { color: #008000; } /* Comment */
+code span.cv { color: #008000; } /* CommentVar */
+code span.do { color: #008000; } /* Documentation */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.im { } /* Import */
+code span.in { color: #008000; } /* Information */
+code span.kw { color: #0000ff; } /* Keyword */
+code span.op { } /* Operator */
+code span.ot { color: #ff4000; } /* Other */
+code span.pp { color: #ff4000; } /* Preprocessor */
+code span.sc { color: #008080; } /* SpecialChar */
+code span.ss { color: #008080; } /* SpecialString */
+code span.st { color: #008080; } /* String */
+code span.va { } /* Variable */
+code span.vs { color: #008080; } /* VerbatimString */
+code span.wa { color: #008000; font-weight: bold; } /* Warning */
+
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+details > summary > p:only-child {
+  display: inline;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark the anchor link active (and if it's in a dropdown, also mark that active)
+  var dropdown = menuAnchor.closest('li.dropdown');
+  if (window.bootstrap) { // Bootstrap 4+
+    menuAnchor.addClass('active');
+    dropdown.find('> .dropdown-toggle').addClass('active');
+  } else { // Bootstrap 3
+    menuAnchor.parent().addClass('active');
+    dropdown.addClass('active');
+  }
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "\e259";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "\e258";
+  font-family: 'Glyphicons Halflings';
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-bs-toggle="collapse" data-target="#navbar" data-bs-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">Machine learning e redes neurais artificiais no melhoramento genetico do cafeeiro</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Home</a>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+    Dados Reais
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="gws_dados_reais.html">GWS - Dados Reais</a>
+    </li>
+    <li>
+      <a href="gwas_dados_reais.html">GWAS - Dados Reais</a>
+    </li>
+  </ul>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+    Dados Simulados
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="gws_dados_simulados.html">GWS - Dados Simulados</a>
+    </li>
+    <li>
+      <a href="gwas_dados_simulados.html">GWAS - Dados Simulados</a>
+    </li>
+  </ul>
+</li>
+<li>
+  <a href="about.html">About</a>
+</li>
+<li>
+  <a href="license.html">License</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li>
+  <a href="https://github.com/WevertonGomesCosta/Machine-learning-e-redes-neurais-artificiais-no-melhoramento-genetico-do-cafeeiro">
+    <span class="fa fa-github"></span>
+     
+    Source code
+  </a>
+</li>
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+
+
+<h1 class="title toc-ignore">GWAS - Dados Reais</h1>
+<h4 class="author">Costa, W. G.<a href="#fn1" class="footnote-ref"
+id="fnref1"><sup>1</sup></a></h4>
+<h4 class="date">2025-07-28</h4>
+
+</div>
+
+
+<p>
+<button type="button" class="btn btn-default btn-workflowr btn-workflowr-report" data-toggle="collapse" data-target="#workflowr-report">
+<span class="glyphicon glyphicon-list" aria-hidden="true"></span>
+workflowr <span class="glyphicon glyphicon-exclamation-sign text-danger"
+aria-hidden="true"></span>
+</button>
+</p>
+<div id="workflowr-report" class="collapse">
+<ul class="nav nav-tabs">
+<li class="active">
+<a data-toggle="tab" href="#summary">Summary</a>
+</li>
+<li>
+<a data-toggle="tab" href="#checks"> Checks <span
+class="glyphicon glyphicon-exclamation-sign text-danger"
+aria-hidden="true"></span> </a>
+</li>
+<li>
+<a data-toggle="tab" href="#versions">Past versions</a>
+</li>
+</ul>
+<div class="tab-content">
+<div id="summary" class="tab-pane fade in active">
+<p>
+<strong>Last updated:</strong> 2025-07-28
+</p>
+<p>
+<strong>Checks:</strong> <span
+class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> 6
+<span class="glyphicon glyphicon-exclamation-sign text-danger"
+aria-hidden="true"></span> 1
+</p>
+<p>
+<strong>Knit directory:</strong>
+<code>Machine-learning-e-redes-neurais-artificiais-no-melhoramento-genetico-do-cafeeiro/</code>
+<span class="glyphicon glyphicon-question-sign" aria-hidden="true"
+title="This is the local directory in which the code in this file was executed.">
+</span>
+</p>
+<p>
+This reproducible <a href="https://rmarkdown.rstudio.com">R Markdown</a>
+analysis was created with <a
+  href="https://github.com/workflowr/workflowr">workflowr</a> (version
+1.7.1). The <em>Checks</em> tab describes the reproducibility checks
+that were applied when the results were created. The <em>Past
+versions</em> tab lists the development history.
+</p>
+<hr>
+</div>
+<div id="checks" class="tab-pane fade">
+<div id="workflowr-checks" class="panel-group">
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRMarkdownfilestronguncommittedchanges">
+<span class="glyphicon glyphicon-exclamation-sign text-danger"
+aria-hidden="true"></span> <strong>R Markdown file:</strong> uncommitted
+changes </a>
+</p>
+</div>
+<div id="strongRMarkdownfilestronguncommittedchanges"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>The R Markdown file has unstaged changes. To know which version of
+the R Markdown file created these results, you’ll want to first commit
+it to the Git repo. If you’re still working on the analysis, you can
+ignore this warning. When you’re finished, you can run
+<code>wflow_publish</code> to commit the R Markdown file and build the
+HTML.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongEnvironmentstrongempty">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Environment:</strong> empty </a>
+</p>
+</div>
+<div id="strongEnvironmentstrongempty" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! The global environment was empty. Objects defined in the
+global environment can affect the analysis in your R Markdown file in
+unknown ways. For reproduciblity it’s best to always run the code in an
+empty environment.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongSeedstrongcodesetseed20250709code">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Seed:</strong>
+<code>set.seed(20250709)</code> </a>
+</p>
+</div>
+<div id="strongSeedstrongcodesetseed20250709code"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>The command <code>set.seed(20250709)</code> was run prior to running
+the code in the R Markdown file. Setting a seed ensures that any results
+that rely on randomness, e.g. subsampling or permutations, are
+reproducible.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongSessioninformationstrongrecorded">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Session information:</strong>
+recorded </a>
+</p>
+</div>
+<div id="strongSessioninformationstrongrecorded"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! Recording the operating system, R version, and package
+versions is critical for reproducibility.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongCachestrongnone">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Cache:</strong> none </a>
+</p>
+</div>
+<div id="strongCachestrongnone" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Nice! There were no cached chunks for this analysis, so you can be
+confident that you successfully produced the results during this
+run.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongFilepathsstrongrelative">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>File paths:</strong> relative </a>
+</p>
+</div>
+<div id="strongFilepathsstrongrelative" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! Using relative paths to the files within your workflowr
+project makes it easier to run your code on other machines.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomWevertonGomesCostaMachinelearningeredesneuraisartificiaisnomelhoramentogeneticodocafeeirotree972697e33315b5b9e66af1e27e29553f124d6095targetblank972697ea">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Repository version:</strong>
+<a href="https://github.com/WevertonGomesCosta/Machine-learning-e-redes-neurais-artificiais-no-melhoramento-genetico-do-cafeeiro/tree/972697e33315b5b9e66af1e27e29553f124d6095" target="_blank">972697e</a>
+</a>
+</p>
+</div>
+<div
+id="strongRepositoryversionstrongahrefhttpsgithubcomWevertonGomesCostaMachinelearningeredesneuraisartificiaisnomelhoramentogeneticodocafeeirotree972697e33315b5b9e66af1e27e29553f124d6095targetblank972697ea"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>
+Great! You are using Git for version control. Tracking code development
+and connecting the code version to the results is critical for
+reproducibility.
+</p>
+<p>
+The results in this page were generated with repository version
+<a href="https://github.com/WevertonGomesCosta/Machine-learning-e-redes-neurais-artificiais-no-melhoramento-genetico-do-cafeeiro/tree/972697e33315b5b9e66af1e27e29553f124d6095" target="_blank">972697e</a>.
+See the <em>Past versions</em> tab to see a history of the changes made
+to the R Markdown and HTML files.
+</p>
+<p>
+Note that you need to be careful to ensure that all relevant files for
+the analysis have been committed to Git prior to generating the results
+(you can use <code>wflow_publish</code> or
+<code>wflow_git_commit</code>). workflowr only checks the R Markdown
+file, but you know if there are other scripts or data files that it
+depends on. Below is the status of the Git repository when the results
+were generated:
+</p>
+<pre><code>
+Ignored files:
+    Ignored:    .Rproj.user/
+    Ignored:    analysis/figure/
+    Ignored:    analysis/modelos_mistos_dados_reais.Rmd
+    Ignored:    data/dados_reais/Fenótipos 2014_2015_2016_C.arabica (1).xlsx
+    Ignored:    data/dados_reais/Fenótipos 2014_2015_2016_C.arabica.xlsx
+    Ignored:    data/dados_reais/FiltStep1_minQ10.0_minDP3_DPrange15-maxMeanDepth750_miss0.4_maf0.01_mac1_EMB_291701_SNPs_Raw.vcf.012.012
+    Ignored:    data/dados_reais/FiltStep1_minQ10.0_minDP3_DPrange15-maxMeanDepth750_miss0.4_maf0.01_mac1_EMB_291701_SNPs_Raw.vcf.012.012.indv
+    Ignored:    data/dados_reais/FiltStep1_minQ10.0_minDP3_DPrange15-maxMeanDepth750_miss0.4_maf0.01_mac1_EMB_291701_SNPs_Raw.vcf.012.012.pos
+    Ignored:    data/dados_reais/FiltStep1_minQ10_minDP3_DPrange15-750_miss0.4_maf0.01_mac1_EMB_291701_filt1_snps_RAW.012.indv.txt
+    Ignored:    data/dados_reais/FiltStep1_minQ10_minDP3_DPrange15-750_miss0.4_maf0.01_mac1_EMB_291701_filt1_snps_RAW.012.pos.txt
+    Ignored:    data/dados_reais/FiltStep1_minQ10_minDP3_DPrange15-750_miss0.4_maf0.01_mac1_EMB_291701_filt1_snps_RAW.012.txt
+    Ignored:    data/dados_reais/fpls-09-01934.pdf
+    Ignored:    data/dados_reais/plants-13-01876-v2.pdf
+    Ignored:    output/BLUPS_par_mmer.Rdata
+    Ignored:    output/blups_all_wide.csv
+    Ignored:    output/mean_pheno.csv
+    Ignored:    output/real_results_consolidated_10r_3f.xlsx
+    Ignored:    output/real_results_consolidated_5r_5f.xlsx
+    Ignored:    output/result_sommer_pl_geracao_random.RDS
+    Ignored:    output/result_sommer_random.RDS
+
+Untracked files:
+    Untracked:  output/gwas_combined_results.rds
+    Untracked:  output/gwas_results.rds
+    Untracked:  output/importance_ML.rds
+    Untracked:  output/importance_ML_mean.rds
+    Untracked:  output/manhattan_BM.tiff
+    Untracked:  output/manhattan_Cer.tiff
+    Untracked:  output/manhattan_Prod.Cor.tiff
+    Untracked:  output/mod.RDS
+    Untracked:  output/plot_lddecay.Rda
+    Untracked:  output/pred_mod.RDS
+    Untracked:  output/real_lddecay.tiff
+    Untracked:  output/res.RDS
+    Untracked:  output/results_cv_GBLUP_a.rds
+    Untracked:  output/results_cv_GBLUP_ad.rds
+    Untracked:  output/results_cv_GBLUP_ade.rds
+    Untracked:  output/simulated_results_consolidated.xlsx
+
+Unstaged changes:
+    Modified:   analysis/gwas_dados_reais.Rmd
+    Modified:   data/dados_reais/.gitignore
+
+Staged changes:
+    New:        data/dados_reais/geno_real.rds
+
+</code></pre>
+<p>
+Note that any generated files, e.g. HTML, png, CSS, etc., are not
+included in this status report because it is ok for generated content to
+have uncommitted changes.
+</p>
+</div>
+</div>
+</div>
+</div>
+<hr>
+</div>
+<div id="versions" class="tab-pane fade">
+<p>
+These are the previous versions of the repository in which changes were
+made to the R Markdown (<code>analysis/gwas_dados_reais.Rmd</code>) and
+HTML (<code>docs/gwas_dados_reais.html</code>) files. If you’ve
+configured a remote Git repository (see <code>?wflow_git_remote</code>),
+click on the hyperlinks in the table below to view the files as they
+were in that past version.
+</p>
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+File
+</th>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+<th>
+Message
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+Rmd
+</td>
+<td>
+<a href="https://github.com/WevertonGomesCosta/Machine-learning-e-redes-neurais-artificiais-no-melhoramento-genetico-do-cafeeiro/blob/76b5e77753ead9e5883a06755758960132ea7808/analysis/gwas_dados_reais.Rmd" target="_blank">76b5e77</a>
+</td>
+<td>
+WevertonGomesCosta
+</td>
+<td>
+2025-07-28
+</td>
+<td>
+add scripts .Rmd to gws and gwas for real and simulated data
+</td>
+</tr>
+<tr>
+<td>
+Rmd
+</td>
+<td>
+<a href="https://github.com/WevertonGomesCosta/Machine-learning-e-redes-neurais-artificiais-no-melhoramento-genetico-do-cafeeiro/blob/f8be55a2e5f695ffc4275b979cbf211fc4d2927a/analysis/gwas_dados_reais.Rmd" target="_blank">f8be55a</a>
+</td>
+<td>
+WevertonGomesCosta
+</td>
+<td>
+2025-07-24
+</td>
+<td>
+add gws and gwas_dados_reais.Rmd
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<hr>
+</div>
+</div>
+</div>
+<div
+id="análise-de-associação-genômica-ampla-gwas---dados-reais-coffea-arabica"
+class="section level1">
+<h1>Análise de Associação Genômica Ampla (GWAS) - Dados Reais (Coffea
+arabica)</h1>
+<p>Este script realiza uma análise de associação genômica ampla (GWAS)
+utilizando o pacote GAPIT em R. Ele carrega dados fenotípicos e
+genotípicos reais, prepara os dados para análise e executa modelos de
+GWAS para cada combinação de traço e modelo especificado. Os resultados
+são salvos em um arquivo RDS.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(GAPIT) <span class="co"># Para análise de associação genômica ampla (GWAS)</span></span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">library</span>(sommer) <span class="co"># Para modelos mistos e análise de variância</span></span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="fu">library</span>(tidyverse) <span class="co"># Para manipulação de dados</span></span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="fu">library</span>(doParallel) <span class="co"># Para paralelização</span></span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a><span class="fu">library</span>(foreach) <span class="co"># Para loops paralelos</span></span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a><span class="fu">library</span>(ggrepel) <span class="co"># Para rótulos de texto em gráficos</span></span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a><span class="fu">library</span>(ggthemes) <span class="co"># Para temas de gráficos</span></span></code></pre></div>
+<div id="carregamento-de-dados" class="section level2">
+<h2>1. Carregamento de Dados</h2>
+<p>Os dados fenotípicos e genotípicos são carregados a partir de
+arquivos RDS. Certifique-se de que os arquivos estão no diretório
+correto.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co"># Carrega os dados de genótipos e fenótipos</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>pheno <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="at">file =</span> <span class="st">&quot;data/dados_reais/pheno_real.rds&quot;</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="fu">head</span>(pheno)</span></code></pre></div>
+<pre><code># A tibble: 6 × 5
+     ID Prod.Cor   Cer    BM genotipo 
+  &lt;dbl&gt;    &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;    
+1     1    6.37   1.76  2.00 PROG 1_1 
+2    10    3.45   1.73  2.35 PROG 1_10
+3    11    7.03   2.33  2.02 PROG 1_11
+4    12   -1.65   1.75  1.04 PROG 1_12
+5    13   -0.350  1.75  1.04 PROG 1_13
+6    14   10.3    3.14  2.44 PROG 1_14</code></pre>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>geno <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="at">file =</span> <span class="st">&quot;data/dados_reais/geno_real.rds&quot;</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>geno[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>,<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>]</span></code></pre></div>
+<pre><code>          CAonly_Contig15745:814-1134:165 CAonly_Contig2698:0-267:74
+PROG 1_1                                0                          0
+PROG 1_10                              -1                          0
+PROG 1_11                              -1                          0
+PROG 1_12                              -1                          0
+PROG 1_13                              -1                          0
+          CAonly_Contig2698:0-267:88 CAonly_Contig2698:0-267:110
+PROG 1_1                           0                           0
+PROG 1_10                          0                           0
+PROG 1_11                          0                           0
+PROG 1_12                          0                           0
+PROG 1_13                          0                           0
+          CAonly_Contig2698:0-267:125
+PROG 1_1                           -1
+PROG 1_10                          -1
+PROG 1_11                          -1
+PROG 1_12                           0
+PROG 1_13                          -1</code></pre>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>pos_geno <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="at">file =</span> <span class="st">&quot;data/dados_reais/pos_geno_real.rds&quot;</span>)</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="fu">head</span>(pos_geno)</span></code></pre></div>
+<pre><code>                           V1  V2                             pos n_markers
+1 CAonly_Contig15745:814-1134 165 CAonly_Contig15745:814-1134:165         1
+2     CAonly_Contig2698:0-267  74      CAonly_Contig2698:0-267:74         2
+3     CAonly_Contig2698:0-267  88      CAonly_Contig2698:0-267:88         3
+4     CAonly_Contig2698:0-267 110     CAonly_Contig2698:0-267:110         4
+5     CAonly_Contig2698:0-267 125     CAonly_Contig2698:0-267:125         5
+6     CAonly_Contig2698:0-267 150     CAonly_Contig2698:0-267:150         6</code></pre>
+</div>
+<div id="preparação-dos-dados" class="section level2">
+<h2>2. Preparação dos dados</h2>
+<p>Precisamos garantir que os dados fenotípicos e genotípicos estejam no
+formato correto para a análise. Isso inclui a conversão de colunas para
+tipos numéricos e a criação de identificadores únicos.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="co"># 1) Certifique‑se de que o seu data.frame de fenótipos</span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="co">#    tem a coluna &#39;genotipo&#39; e depois só colunas numéricas:</span></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>pheno <span class="ot">&lt;-</span> pheno <span class="sc">%&gt;%</span></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>  <span class="co"># transforma tudo, exceto &#39;genotipo&#39;, em numeric</span></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="sc">-</span>genotipo, <span class="sc">~</span> <span class="fu">as.numeric</span>(<span class="fu">as.character</span>(.))))</span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a></span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a><span class="co"># 2) Mesma ideia para geno</span></span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a>geno <span class="ot">&lt;-</span> geno <span class="sc">%&gt;%</span></span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">where</span>(is.numeric), as.integer))</span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a></span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a><span class="co"># 3) Cria GD com ID e seleciona as colunas de genótipo</span></span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a>GD <span class="ot">&lt;-</span> geno <span class="sc">%&gt;%</span></span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a>  <span class="co"># 1) Cria a coluna ID</span></span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">ID =</span> <span class="fu">rownames</span>(geno)) <span class="sc">%&gt;%</span></span>
+<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a>  <span class="co"># 2) Seleciona apenas ID + todas as colunas cujo nome contém &quot;chr&quot;</span></span>
+<span id="cb8-16"><a href="#cb8-16" tabindex="-1"></a>  <span class="fu">select</span>(ID, <span class="fu">matches</span>(<span class="st">&quot;chr&quot;</span>))</span>
+<span id="cb8-17"><a href="#cb8-17" tabindex="-1"></a>GD[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>,<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>]</span></code></pre></div>
+<pre><code>                 ID chr0:24844 chr0:24881 chr0:24905 chr0:24916
+PROG 1_1   PROG 1_1          0          0          0         -1
+PROG 1_10 PROG 1_10          0          0          0         -1
+PROG 1_11 PROG 1_11          0          0          0         -1
+PROG 1_12 PROG 1_12          1          0          0         -1
+PROG 1_13 PROG 1_13          1         -1          0         -1</code></pre>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="co"># 4) Prepare o GM </span></span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>GM <span class="ot">&lt;-</span> pos_geno <span class="sc">%&gt;%</span></span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>    <span class="at">SNP =</span> pos,</span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>    <span class="at">chr =</span> <span class="fu">as.integer</span>(<span class="fu">str_extract</span>(V1, <span class="st">&quot;</span><span class="sc">\\</span><span class="st">d+&quot;</span>)),</span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a>    <span class="at">pos =</span> V2</span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a>  <span class="fu">select</span>(SNP, chr, pos) <span class="sc">%&gt;%</span></span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a>  <span class="fu">distinct</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a>  <span class="fu">filter</span>(SNP <span class="sc">%in%</span> <span class="fu">names</span>(GD)) <span class="sc">%&gt;%</span></span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a>  <span class="fu">arrange</span>(SNP)</span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a><span class="fu">head</span>(GM)</span></code></pre></div>
+<pre><code>             SNP chr       pos
+1 chr0:100000044   0 100000044
+2 chr0:100000045   0 100000045
+3 chr0:100000085   0 100000085
+4 chr0:100000117   0 100000117
+5 chr0:100000132   0 100000132
+6 chr0:100677213   0 100677213</code></pre>
+</div>
+<div id="desequilibrio-de-ligação" class="section level2">
+<h2>3. Desequilibrio de Ligação</h2>
+<p>Para realizar a análise de desequilíbrio de ligação (LD) entre os
+marcadores, precisamos preparar os dados genotípicos e o mapa de
+marcadores.</p>
+<div id="dados-de-genótipo-e-mapa" class="section level3">
+<h3>3.1 Dados de genótipo e mapa</h3>
+<p>Converta os dados de genótipo para o formato de matriz e prepare o
+mapa de marcadores, garantindo que as colunas estejam no tipo
+correto.</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="co"># Convert genotype data to matrix format</span></span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a><span class="co"># Remove the first column (ID) and convert to matrix</span></span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>CPgeno <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(GD[<span class="sc">-</span><span class="dv">1</span>])</span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a>CPgeno[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>,<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>]</span></code></pre></div>
+<pre><code>          chr0:24844 chr0:24881 chr0:24905 chr0:24916 chr0:231736
+PROG 1_1           0          0          0         -1           0
+PROG 1_10          0          0          0         -1           0
+PROG 1_11          0          0          0         -1           0
+PROG 1_12          1          0          0         -1           0
+PROG 1_13          1         -1          0         -1           0</code></pre>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="co"># Load and prepare map data</span></span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a>mapCP <span class="ot">&lt;-</span> GM <span class="sc">%&gt;%</span></span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Locus =</span> SNP,  <span class="co"># Ensure SNP column is character type</span></span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a>         <span class="at">Position =</span> <span class="fu">as.numeric</span>(pos),  <span class="co"># Ensure pos column is numeric type</span></span>
+<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a>         <span class="at">LG =</span> <span class="fu">as.integer</span>(chr) <span class="sc">+</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span>  <span class="co"># Ensure chr column is integer type</span></span>
+<span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a>  <span class="fu">select</span>(Locus, Position, LG) <span class="sc">%&gt;%</span> </span>
+<span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a>  <span class="fu">filter</span>(Locus <span class="sc">%in%</span> <span class="fu">colnames</span>(CPgeno))  <span class="co"># Filter to include only markers present in CPgeno</span></span>
+<span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a><span class="fu">head</span>(mapCP)</span></code></pre></div>
+<pre><code>           Locus  Position LG
+1 chr0:100000044 100000044  1
+2 chr0:100000045 100000045  1
+3 chr0:100000085 100000085  1
+4 chr0:100000117 100000117  1
+5 chr0:100000132 100000132  1
+6 chr0:100677213 100677213  1</code></pre>
+</div>
+<div id="run-ld-decay-analysis" class="section level3">
+<h3>3.2 Run LD decay analysis</h3>
+<p>Obtenha os grupos de ligação únicos e aplique uma função para
+calcular o decaimento do LD para cada grupo de ligação. A função
+<code>LD.decay</code> do pacote <code>sommer</code> é utilizada para
+calcular o decaimento do LD.</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a>unique_LGs <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">unique</span>(mapCP<span class="sc">$</span>LG))</span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a>unique_LGs</span></code></pre></div>
+<pre><code> [1]  1  2  3  4  5  6  7  8  9 10 11 12</code></pre>
+<p>O objeto <code>res</code> contém os resultados do decaimento do LD
+para cada grupo de ligação, filtrados por pares de marcadores
+significativos após correção de Bonferroni.</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">lapply</span>(unique_LGs, <span class="cf">function</span>(lg) {</span>
+<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a>  </span>
+<span id="cb18-3"><a href="#cb18-3" tabindex="-1"></a>  <span class="co"># Step 2a: For the current linkage group &#39;lg&#39;, extract the corresponding marker names</span></span>
+<span id="cb18-4"><a href="#cb18-4" tabindex="-1"></a>  markers <span class="ot">&lt;-</span> mapCP <span class="sc">%&gt;%</span></span>
+<span id="cb18-5"><a href="#cb18-5" tabindex="-1"></a>    <span class="fu">filter</span>(LG <span class="sc">==</span> lg) <span class="sc">%&gt;%</span>  <span class="co"># Filter the map data to include only rows where LG equals the current linkage group</span></span>
+<span id="cb18-6"><a href="#cb18-6" tabindex="-1"></a>    <span class="fu">pull</span>(Locus)           <span class="co"># Extract the &#39;Locus&#39; column, which contains marker names</span></span>
+<span id="cb18-7"><a href="#cb18-7" tabindex="-1"></a>  </span>
+<span id="cb18-8"><a href="#cb18-8" tabindex="-1"></a>  <span class="co"># Step 2b: Perform Linkage Disequilibrium (LD) decay analysis on the genotype data for these markers</span></span>
+<span id="cb18-9"><a href="#cb18-9" tabindex="-1"></a>  LDDecay <span class="ot">&lt;-</span> <span class="fu">LD.decay</span>(CPgeno[, markers], <span class="co"># Subset the genotype matrix to include only the columns for the current markers</span></span>
+<span id="cb18-10"><a href="#cb18-10" tabindex="-1"></a>                      mapCP <span class="sc">%&gt;%</span> <span class="fu">filter</span>(LG <span class="sc">==</span> lg))  <span class="co"># Subset the map data to include only the current linkage group</span></span>
+<span id="cb18-11"><a href="#cb18-11" tabindex="-1"></a>  </span>
+<span id="cb18-12"><a href="#cb18-12" tabindex="-1"></a>  <span class="co"># Step 2c: Filter the LD results to include only significant marker pairs after Bonferroni correction</span></span>
+<span id="cb18-13"><a href="#cb18-13" tabindex="-1"></a>  A <span class="ot">&lt;-</span> LDDecay<span class="sc">$</span>all.LG <span class="sc">%&gt;%</span>  <span class="co"># Access the LD results for all marker pairs</span></span>
+<span id="cb18-14"><a href="#cb18-14" tabindex="-1"></a>    <span class="fu">filter</span>(p <span class="sc">&lt;</span> <span class="fl">0.05</span> <span class="sc">/</span> <span class="fu">choose</span>(<span class="fu">length</span>(markers), <span class="dv">2</span>))  <span class="co"># Apply Bonferroni correction to adjust the p-value threshold</span></span>
+<span id="cb18-15"><a href="#cb18-15" tabindex="-1"></a>  </span>
+<span id="cb18-16"><a href="#cb18-16" tabindex="-1"></a>  <span class="co"># Step 2d: Check if there are any significant marker pairs</span></span>
+<span id="cb18-17"><a href="#cb18-17" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">nrow</span>(A) <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb18-18"><a href="#cb18-18" tabindex="-1"></a>    <span class="co"># If significant pairs exist, create a data frame including the linkage group identifier</span></span>
+<span id="cb18-19"><a href="#cb18-19" tabindex="-1"></a>    <span class="fu">data.frame</span>(<span class="at">GL =</span> <span class="fu">paste0</span>(<span class="st">&quot;lg&quot;</span>, lg), <span class="co"># Add a column &#39;GL&#39; with the linkage group name (e.g., &#39;lg1&#39;, &#39;lg2&#39;, etc.)</span></span>
+<span id="cb18-20"><a href="#cb18-20" tabindex="-1"></a>               A)                       <span class="co"># Include the filtered LD decay results</span></span>
+<span id="cb18-21"><a href="#cb18-21" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb18-22"><a href="#cb18-22" tabindex="-1"></a>    <span class="co"># If no significant pairs are found, return NULL for this linkage group</span></span>
+<span id="cb18-23"><a href="#cb18-23" tabindex="-1"></a>    <span class="cn">NULL</span></span>
+<span id="cb18-24"><a href="#cb18-24" tabindex="-1"></a>  }</span>
+<span id="cb18-25"><a href="#cb18-25" tabindex="-1"></a>})</span>
+<span id="cb18-26"><a href="#cb18-26" tabindex="-1"></a></span>
+<span id="cb18-27"><a href="#cb18-27" tabindex="-1"></a><span class="co"># Save res</span></span>
+<span id="cb18-28"><a href="#cb18-28" tabindex="-1"></a></span>
+<span id="cb18-29"><a href="#cb18-29" tabindex="-1"></a><span class="fu">saveRDS</span>(res, <span class="st">&quot;output/res.RDS&quot;</span>)</span></code></pre></div>
+<p>O objeto <code>dados</code> será o conjunto de dados final contendo
+os resultados do decaimento do LD, com as colunas <code>d</code>
+(distância entre os marcadores em par de bases) e <code>r2</code>
+(coeficiente de determinação). A coluna <code>GL</code> indica o grupo
+de ligação ao qual os marcadores pertencem.</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a>res <span class="ot">&lt;-</span> res[<span class="sc">!</span><span class="fu">sapply</span>(res, is.null)]</span>
+<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a>dados <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, res)</span>
+<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a>dados<span class="sc">$</span>GL <span class="ot">&lt;-</span> <span class="fu">as.factor</span>(dados<span class="sc">$</span>GL)</span>
+<span id="cb19-4"><a href="#cb19-4" tabindex="-1"></a><span class="fu">head</span>(dados)</span></code></pre></div>
+<pre><code>   GL  d        r2            p
+1 lg1  0 1.0000000 0.000000e+00
+2 lg1  1 0.7731250 0.000000e+00
+3 lg1  0 1.0000000 0.000000e+00
+4 lg1 41 0.3454594 2.220446e-16
+5 lg1 40 0.3476557 2.220446e-16
+6 lg1  0 1.0000000 0.000000e+00</code></pre>
+<p>Ajuste o modelo de perda de LD usando uma regressão local (loess)
+para prever o decaimento do LD em função da distância entre os
+marcadores.</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a>mod <span class="ot">&lt;-</span> <span class="fu">loess</span>(r2 <span class="sc">~</span> d, <span class="at">data =</span> teste)</span>
+<span id="cb21-2"><a href="#cb21-2" tabindex="-1"></a><span class="fu">saveRDS</span>(mod, <span class="at">file =</span> <span class="st">&quot;output/mod.RDS&quot;</span>)</span></code></pre></div>
+<p>Prepare uma sequência de distâncias para prever o decaimento do LD
+usando o modelo ajustado. A sequência é criada com base nos valores
+mínimos e máximos de distância (<code>d</code>) encontrados nos
+dados.</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" tabindex="-1"></a><span class="co"># Usa grid reduzido para evitar alocação grande</span></span>
+<span id="cb22-2"><a href="#cb22-2" tabindex="-1"></a>n_points <span class="ot">&lt;-</span> <span class="dv">1000</span></span>
+<span id="cb22-3"><a href="#cb22-3" tabindex="-1"></a></span>
+<span id="cb22-4"><a href="#cb22-4" tabindex="-1"></a>d_min <span class="ot">&lt;-</span> <span class="fu">min</span>(dados<span class="sc">$</span>d)</span>
+<span id="cb22-5"><a href="#cb22-5" tabindex="-1"></a>d_max <span class="ot">&lt;-</span> <span class="fu">max</span>(dados<span class="sc">$</span>d)</span>
+<span id="cb22-6"><a href="#cb22-6" tabindex="-1"></a>d_seq <span class="ot">&lt;-</span> <span class="fu">seq</span>(d_min, d_max, <span class="at">length.out =</span> n_points)[<span class="sc">-</span><span class="dv">1</span>]</span></code></pre></div>
+<p>Preveja o decaimento do LD usando o modelo ajustado e salve os
+resultados em um arquivo RDS. O objeto <code>data_pred</code> conterá as
+distâncias e as previsões correspondentes.</p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" tabindex="-1"></a>pred <span class="ot">&lt;-</span> <span class="fu">predict</span>(mod, d_seq)</span>
+<span id="cb23-2"><a href="#cb23-2" tabindex="-1"></a>data_pred <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">d =</span> d_seq, <span class="at">pred =</span> pred)</span>
+<span id="cb23-3"><a href="#cb23-3" tabindex="-1"></a><span class="fu">head</span>(data_pred)</span>
+<span id="cb23-4"><a href="#cb23-4" tabindex="-1"></a><span class="fu">saveRDS</span>(data_pred, <span class="at">file =</span> <span class="st">&quot;output/pred_mod.RDS&quot;</span>)</span></code></pre></div>
+<p>Encontre a distância mais próxima do valor alvo de r² (0.8) e
+armazena essa distância em <code>closest_d</code>. A função
+<code>which.min</code> é utilizada para encontrar o índice da distância
+mais próxima.</p>
+<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" tabindex="-1"></a>target_r2 <span class="ot">&lt;-</span> <span class="fl">0.8</span></span>
+<span id="cb24-2"><a href="#cb24-2" tabindex="-1"></a>closest_index <span class="ot">&lt;-</span> <span class="fu">which.min</span>(<span class="fu">abs</span>(data_pred<span class="sc">$</span>pred <span class="sc">-</span> target_r2))</span>
+<span id="cb24-3"><a href="#cb24-3" tabindex="-1"></a>closest_d <span class="ot">&lt;-</span> d_seq[closest_index]</span>
+<span id="cb24-4"><a href="#cb24-4" tabindex="-1"></a>closest_d</span></code></pre></div>
+<pre><code>[1] 205381.6</code></pre>
+</div>
+<div id="plote-o-decaimento-do-ld" class="section level3">
+<h3>3.3 Plote o decaimento do LD</h3>
+<p>Utilize o <code>ggplot2</code> para criar um gráfico do decaimento do
+LD, incluindo os pontos de dados originais, a linha de ajuste do modelo
+loess e as linhas verticais e horizontais para destacar o valor alvo de
+r² e a distância correspondente.</p>
+<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" tabindex="-1"></a><span class="co"># Create the plot with additional adjustments</span></span>
+<span id="cb26-2"><a href="#cb26-2" tabindex="-1"></a>color_palette <span class="ot">&lt;-</span> <span class="fu">colorRampPalette</span>(<span class="fu">c</span>(<span class="st">&#39;black&#39;</span>, <span class="st">&#39;gray50&#39;</span>))</span>
+<span id="cb26-3"><a href="#cb26-3" tabindex="-1"></a></span>
+<span id="cb26-4"><a href="#cb26-4" tabindex="-1"></a><span class="co"># Plot the data with the fitted loess model and target r² line</span></span>
+<span id="cb26-5"><a href="#cb26-5" tabindex="-1"></a>p <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(dados, <span class="fu">aes</span>(<span class="at">x =</span> d, <span class="at">y =</span> r2, <span class="at">colour =</span> GL)) <span class="sc">+</span></span>
+<span id="cb26-6"><a href="#cb26-6" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">pch =</span> <span class="dv">21</span>, <span class="at">show.legend =</span> <span class="cn">FALSE</span>) <span class="sc">+</span></span>
+<span id="cb26-7"><a href="#cb26-7" tabindex="-1"></a>  <span class="fu">geom_line</span>(</span>
+<span id="cb26-8"><a href="#cb26-8" tabindex="-1"></a>    <span class="at">data =</span> data_pred,</span>
+<span id="cb26-9"><a href="#cb26-9" tabindex="-1"></a>    <span class="fu">aes</span>(<span class="at">x =</span> d, <span class="at">y =</span> pred),</span>
+<span id="cb26-10"><a href="#cb26-10" tabindex="-1"></a>    <span class="at">colour =</span> <span class="st">&#39;red&#39;</span>,</span>
+<span id="cb26-11"><a href="#cb26-11" tabindex="-1"></a>    <span class="at">linewidth =</span> <span class="dv">1</span></span>
+<span id="cb26-12"><a href="#cb26-12" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb26-13"><a href="#cb26-13" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> target_r2,</span>
+<span id="cb26-14"><a href="#cb26-14" tabindex="-1"></a>             <span class="at">linetype =</span> <span class="st">&quot;dashed&quot;</span>,</span>
+<span id="cb26-15"><a href="#cb26-15" tabindex="-1"></a>             <span class="at">color =</span> <span class="st">&quot;blue&quot;</span>) <span class="sc">+</span></span>
+<span id="cb26-16"><a href="#cb26-16" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> closest_d,</span>
+<span id="cb26-17"><a href="#cb26-17" tabindex="-1"></a>             <span class="at">linetype =</span> <span class="st">&quot;dashed&quot;</span>,</span>
+<span id="cb26-18"><a href="#cb26-18" tabindex="-1"></a>             <span class="at">color =</span> <span class="st">&quot;green&quot;</span>) <span class="sc">+</span></span>
+<span id="cb26-19"><a href="#cb26-19" tabindex="-1"></a>  <span class="fu">geom_point</span>(</span>
+<span id="cb26-20"><a href="#cb26-20" tabindex="-1"></a>    <span class="fu">aes</span>(<span class="at">x =</span> closest_d, <span class="at">y =</span> target_r2),</span>
+<span id="cb26-21"><a href="#cb26-21" tabindex="-1"></a>    <span class="at">data =</span> <span class="cn">NULL</span>,</span>
+<span id="cb26-22"><a href="#cb26-22" tabindex="-1"></a>    <span class="at">color =</span> <span class="st">&quot;gold&quot;</span>,</span>
+<span id="cb26-23"><a href="#cb26-23" tabindex="-1"></a>    <span class="at">size =</span> <span class="dv">3</span></span>
+<span id="cb26-24"><a href="#cb26-24" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb26-25"><a href="#cb26-25" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(<span class="at">values =</span> <span class="fu">color_palette</span>(<span class="fu">length</span>(<span class="fu">unique</span>(dados<span class="sc">$</span>GL)))) <span class="sc">+</span></span>
+<span id="cb26-26"><a href="#cb26-26" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">breaks =</span> <span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="at">by =</span> <span class="fl">0.1</span>)) <span class="sc">+</span></span>
+<span id="cb26-27"><a href="#cb26-27" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&quot;Distance em par de bases (d)&quot;</span>, <span class="at">y =</span> <span class="fu">expression</span>(r<span class="sc">^</span><span class="dv">2</span>)) <span class="sc">+</span></span>
+<span id="cb26-28"><a href="#cb26-28" tabindex="-1"></a>  <span class="fu">theme_classic</span>() <span class="sc">+</span></span>
+<span id="cb26-29"><a href="#cb26-29" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">text =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">15</span>))</span>
+<span id="cb26-30"><a href="#cb26-30" tabindex="-1"></a></span>
+<span id="cb26-31"><a href="#cb26-31" tabindex="-1"></a><span class="co"># Add text annotation for the closest distance and target r²</span></span>
+<span id="cb26-32"><a href="#cb26-32" tabindex="-1"></a>p <span class="ot">&lt;-</span> p <span class="sc">+</span></span>
+<span id="cb26-33"><a href="#cb26-33" tabindex="-1"></a>  <span class="fu">geom_text</span>(</span>
+<span id="cb26-34"><a href="#cb26-34" tabindex="-1"></a>    <span class="fu">aes</span>(</span>
+<span id="cb26-35"><a href="#cb26-35" tabindex="-1"></a>      <span class="at">x =</span> <span class="fl">2.5e7</span>,</span>
+<span id="cb26-36"><a href="#cb26-36" tabindex="-1"></a>      <span class="at">y =</span> target_r2,</span>
+<span id="cb26-37"><a href="#cb26-37" tabindex="-1"></a>      <span class="at">label =</span> <span class="fu">paste</span>(<span class="st">&quot;d =&quot;</span>, <span class="fu">round</span>(closest_d, <span class="dv">0</span>), <span class="st">&quot;p&quot;</span>)</span>
+<span id="cb26-38"><a href="#cb26-38" tabindex="-1"></a>    ),</span>
+<span id="cb26-39"><a href="#cb26-39" tabindex="-1"></a>    <span class="at">data =</span> <span class="cn">NULL</span>,</span>
+<span id="cb26-40"><a href="#cb26-40" tabindex="-1"></a>    <span class="at">nudge_y =</span> <span class="fl">0.02</span>,</span>
+<span id="cb26-41"><a href="#cb26-41" tabindex="-1"></a>    <span class="at">color =</span> <span class="st">&quot;black&quot;</span>,</span>
+<span id="cb26-42"><a href="#cb26-42" tabindex="-1"></a>    <span class="at">fontface =</span> <span class="st">&quot;bold&quot;</span></span>
+<span id="cb26-43"><a href="#cb26-43" tabindex="-1"></a>  )</span>
+<span id="cb26-44"><a href="#cb26-44" tabindex="-1"></a></span>
+<span id="cb26-45"><a href="#cb26-45" tabindex="-1"></a><span class="fu">print</span>(p)</span></code></pre></div>
+<p><img src="figure/gwas_dados_reais.Rmd/plot-ld-1.png" width="100%" style="display: block; margin: auto;" /></p>
+<p>Definimos um limiar de LD de 0.8 e obtivemos que a distância de
+decaimento é aproximadamente <strong>2.0538156^{5}</strong>, em par de
+bases.</p>
+</div>
+</div>
+<div id="preparação-para-gwas-gapit" class="section level2">
+<h2>4. Preparação para GWAS (GAPIT)</h2>
+<p>Os modelos GAPIT a serem avaliados são definidos, e os dados
+fenotípicos e genotípicos são preparados para a análise de associação
+genômica ampla (GWAS).</p>
+<p>Os modelos GLM (General Linear Model), MLM (Mixed Linear Model), CMLM
+(Compressed Mixed Linear Model), MLMM (Multi-Locus Mixed Model), SUPER
+(SNP Unbiased Epistatic Regression), FarmCPU (Fixed and Random Model
+Circulating Probability Unification) e Blink (Bayesian Linear
+Regression) são utilizados para realizar a análise de associação
+genômica. O GAPIT é um pacote amplamente utilizado em estudos de GWAS,
+pois permite a análise eficiente de grandes conjuntos de dados genômicos
+e fenotípicos.</p>
+<div class="sourceCode" id="cb27"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" tabindex="-1"></a><span class="co"># Definir modelos do GAPIT a serem avaliados</span></span>
+<span id="cb27-2"><a href="#cb27-2" tabindex="-1"></a>models <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;GLM&quot;</span>, <span class="st">&quot;MLM&quot;</span>, <span class="st">&quot;CMLM&quot;</span>, <span class="st">&quot;MLMM&quot;</span>, <span class="st">&quot;SUPER&quot;</span>, <span class="st">&quot;FarmCPU&quot;</span>, <span class="st">&quot;Blink&quot;</span>)</span></code></pre></div>
+<div id="loop-para-executar-gapit-em-paralelo" class="section level3">
+<h3>4.1 Loop para executar GAPIT em paralelo</h3>
+<p>Para executar a análise de GWAS em paralelo, utilizamos o pacote
+<code>doParallel</code> para configurar um cluster que permite a
+execução simultânea de múltiplas análises. Isso acelera
+significativamente o processo, especialmente quando lidamos com grandes
+conjuntos de dados e múltiplos modelos.</p>
+<p>O objeto <code>results_cv_GAPIT</code> armazenará os resultados de
+todas as análises de GWAS, organizados por trait e modelo. Cada iteração
+do loop executa o GAPIT para uma combinação específica de trait e
+modelo, prepara os dados fenotípicos e genotípicos, e extrai os
+resultados da análise.</p>
+<div class="sourceCode" id="cb28"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" tabindex="-1"></a><span class="co"># Configuração do cluster para paralelização (usa todos os núcleos menos um)</span></span>
+<span id="cb28-2"><a href="#cb28-2" tabindex="-1"></a>numCores <span class="ot">&lt;-</span> <span class="fu">max</span>(<span class="dv">1</span>, parallel<span class="sc">::</span><span class="fu">detectCores</span>() <span class="sc">-</span> <span class="dv">1</span>)</span>
+<span id="cb28-3"><a href="#cb28-3" tabindex="-1"></a>cl <span class="ot">&lt;-</span> <span class="fu">makeCluster</span>(numCores)</span>
+<span id="cb28-4"><a href="#cb28-4" tabindex="-1"></a><span class="fu">registerDoParallel</span>(cl)</span>
+<span id="cb28-5"><a href="#cb28-5" tabindex="-1"></a></span>
+<span id="cb28-6"><a href="#cb28-6" tabindex="-1"></a><span class="co"># Criar combinações de traits e modelos</span></span>
+<span id="cb28-7"><a href="#cb28-7" tabindex="-1"></a>combos <span class="ot">&lt;-</span> <span class="fu">expand.grid</span>(<span class="at">trait =</span> traits,</span>
+<span id="cb28-8"><a href="#cb28-8" tabindex="-1"></a>                      <span class="at">model =</span> models,</span>
+<span id="cb28-9"><a href="#cb28-9" tabindex="-1"></a>                      <span class="at">stringsAsFactors =</span> <span class="cn">FALSE</span>) <span class="sc">%&gt;%</span> <span class="fu">as_tibble</span>()</span>
+<span id="cb28-10"><a href="#cb28-10" tabindex="-1"></a></span>
+<span id="cb28-11"><a href="#cb28-11" tabindex="-1"></a><span class="co"># Loop paralelo: executar GAPIT para cada combinação</span></span>
+<span id="cb28-12"><a href="#cb28-12" tabindex="-1"></a>results_cv_GAPIT <span class="ot">&lt;-</span> <span class="fu">foreach</span>(</span>
+<span id="cb28-13"><a href="#cb28-13" tabindex="-1"></a>  <span class="at">idx =</span> <span class="fu">seq_len</span>(<span class="fu">nrow</span>(combos)),</span>
+<span id="cb28-14"><a href="#cb28-14" tabindex="-1"></a>  <span class="at">.packages =</span> <span class="fu">c</span>(<span class="st">&quot;GAPIT&quot;</span>, <span class="st">&quot;dplyr&quot;</span>, <span class="st">&quot;tibble&quot;</span>),</span>
+<span id="cb28-15"><a href="#cb28-15" tabindex="-1"></a>  <span class="at">.combine =</span> bind_rows</span>
+<span id="cb28-16"><a href="#cb28-16" tabindex="-1"></a>) <span class="sc">%dopar%</span> {</span>
+<span id="cb28-17"><a href="#cb28-17" tabindex="-1"></a>  <span class="co"># Identificar trait e modelo</span></span>
+<span id="cb28-18"><a href="#cb28-18" tabindex="-1"></a>  trait_name  <span class="ot">&lt;-</span> combos<span class="sc">$</span>trait[idx]</span>
+<span id="cb28-19"><a href="#cb28-19" tabindex="-1"></a>  model_name <span class="ot">&lt;-</span> combos<span class="sc">$</span>model[idx]</span>
+<span id="cb28-20"><a href="#cb28-20" tabindex="-1"></a>  </span>
+<span id="cb28-21"><a href="#cb28-21" tabindex="-1"></a>  <span class="co"># Preparar Y: converte fenótipo para numérico</span></span>
+<span id="cb28-22"><a href="#cb28-22" tabindex="-1"></a>  Y <span class="ot">&lt;-</span> pheno <span class="sc">%&gt;%</span></span>
+<span id="cb28-23"><a href="#cb28-23" tabindex="-1"></a>    <span class="fu">select</span>(genotipo, <span class="fu">all_of</span>(trait_name)) <span class="sc">%&gt;%</span></span>
+<span id="cb28-24"><a href="#cb28-24" tabindex="-1"></a>    <span class="fu">rename</span>(<span class="at">ID =</span> genotipo) <span class="sc">%&gt;%</span></span>
+<span id="cb28-25"><a href="#cb28-25" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="sc">-</span>ID, <span class="sc">~</span> <span class="fu">as.numeric</span>(<span class="fu">as.character</span>(.)))) <span class="sc">%&gt;%</span></span>
+<span id="cb28-26"><a href="#cb28-26" tabindex="-1"></a>    <span class="fu">as.data.frame</span>()</span>
+<span id="cb28-27"><a href="#cb28-27" tabindex="-1"></a>  </span>
+<span id="cb28-28"><a href="#cb28-28" tabindex="-1"></a>  <span class="co"># Executar modelo GAPIT sem gerar arquivos de saída</span></span>
+<span id="cb28-29"><a href="#cb28-29" tabindex="-1"></a>  fit <span class="ot">&lt;-</span> <span class="fu">GAPIT</span>(</span>
+<span id="cb28-30"><a href="#cb28-30" tabindex="-1"></a>    <span class="at">Y           =</span> Y,</span>
+<span id="cb28-31"><a href="#cb28-31" tabindex="-1"></a>    <span class="at">GD          =</span> GD,</span>
+<span id="cb28-32"><a href="#cb28-32" tabindex="-1"></a>    <span class="at">GM          =</span> GM,</span>
+<span id="cb28-33"><a href="#cb28-33" tabindex="-1"></a>    <span class="at">model       =</span> model_name,</span>
+<span id="cb28-34"><a href="#cb28-34" tabindex="-1"></a>    <span class="at">file.output =</span> <span class="cn">FALSE</span></span>
+<span id="cb28-35"><a href="#cb28-35" tabindex="-1"></a>  )</span>
+<span id="cb28-36"><a href="#cb28-36" tabindex="-1"></a>  </span>
+<span id="cb28-37"><a href="#cb28-37" tabindex="-1"></a>  <span class="co"># Extrair resultados GWAS e padronizar tipos</span></span>
+<span id="cb28-38"><a href="#cb28-38" tabindex="-1"></a>  gwas <span class="ot">&lt;-</span> <span class="fu">as_tibble</span>(fit<span class="sc">$</span>GWAS) <span class="sc">%&gt;%</span></span>
+<span id="cb28-39"><a href="#cb28-39" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="at">.cols =</span> <span class="sc">-</span>SNP, <span class="at">.fns =</span> <span class="sc">~</span> <span class="cf">if</span> (<span class="fu">is.character</span>(.x)) {</span>
+<span id="cb28-40"><a href="#cb28-40" tabindex="-1"></a>      <span class="fu">suppressWarnings</span>(<span class="fu">as.numeric</span>(.x))</span>
+<span id="cb28-41"><a href="#cb28-41" tabindex="-1"></a>    } <span class="cf">else</span> {</span>
+<span id="cb28-42"><a href="#cb28-42" tabindex="-1"></a>      .x</span>
+<span id="cb28-43"><a href="#cb28-43" tabindex="-1"></a>    }))</span>
+<span id="cb28-44"><a href="#cb28-44" tabindex="-1"></a>  </span>
+<span id="cb28-45"><a href="#cb28-45" tabindex="-1"></a>  <span class="co"># Ajustar nomes de colunas conforme modelo</span></span>
+<span id="cb28-46"><a href="#cb28-46" tabindex="-1"></a>  <span class="cf">if</span> (model_name <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;MLMM&quot;</span>, <span class="st">&quot;FarmCPU&quot;</span>)) {</span>
+<span id="cb28-47"><a href="#cb28-47" tabindex="-1"></a>    <span class="fu">colnames</span>(gwas) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;SNP&quot;</span>,</span>
+<span id="cb28-48"><a href="#cb28-48" tabindex="-1"></a>                        <span class="st">&quot;Chromosome&quot;</span>,</span>
+<span id="cb28-49"><a href="#cb28-49" tabindex="-1"></a>                        <span class="st">&quot;Position &quot;</span>,</span>
+<span id="cb28-50"><a href="#cb28-50" tabindex="-1"></a>                        <span class="st">&quot;P.value&quot;</span>,</span>
+<span id="cb28-51"><a href="#cb28-51" tabindex="-1"></a>                        <span class="st">&quot;maf&quot;</span>,</span>
+<span id="cb28-52"><a href="#cb28-52" tabindex="-1"></a>                        <span class="st">&quot;nobs&quot;</span>,</span>
+<span id="cb28-53"><a href="#cb28-53" tabindex="-1"></a>                        <span class="st">&quot;effect&quot;</span>)</span>
+<span id="cb28-54"><a href="#cb28-54" tabindex="-1"></a>  }</span>
+<span id="cb28-55"><a href="#cb28-55" tabindex="-1"></a>  </span>
+<span id="cb28-56"><a href="#cb28-56" tabindex="-1"></a>  <span class="cf">if</span> (model_name <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;Blink&quot;</span>)) {</span>
+<span id="cb28-57"><a href="#cb28-57" tabindex="-1"></a>    <span class="fu">colnames</span>(gwas) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;SNP&quot;</span>,</span>
+<span id="cb28-58"><a href="#cb28-58" tabindex="-1"></a>                        <span class="st">&quot;Chromosome&quot;</span>,</span>
+<span id="cb28-59"><a href="#cb28-59" tabindex="-1"></a>                        <span class="st">&quot;Position &quot;</span>,</span>
+<span id="cb28-60"><a href="#cb28-60" tabindex="-1"></a>                        <span class="st">&quot;P.value&quot;</span>,</span>
+<span id="cb28-61"><a href="#cb28-61" tabindex="-1"></a>                        <span class="st">&quot;nobs&quot;</span>,</span>
+<span id="cb28-62"><a href="#cb28-62" tabindex="-1"></a>                        <span class="st">&quot;effect&quot;</span>,</span>
+<span id="cb28-63"><a href="#cb28-63" tabindex="-1"></a>                        <span class="st">&quot;maf&quot;</span>)</span>
+<span id="cb28-64"><a href="#cb28-64" tabindex="-1"></a>  }</span>
+<span id="cb28-65"><a href="#cb28-65" tabindex="-1"></a>  </span>
+<span id="cb28-66"><a href="#cb28-66" tabindex="-1"></a>  <span class="co"># Adicionar metadados de trait e modelo</span></span>
+<span id="cb28-67"><a href="#cb28-67" tabindex="-1"></a>  gwas <span class="sc">%&gt;%</span></span>
+<span id="cb28-68"><a href="#cb28-68" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">trait =</span> trait_name, <span class="at">model =</span> model_name) <span class="sc">%&gt;%</span></span>
+<span id="cb28-69"><a href="#cb28-69" tabindex="-1"></a>    <span class="fu">select</span>(trait, model, <span class="fu">everything</span>())</span>
+<span id="cb28-70"><a href="#cb28-70" tabindex="-1"></a>}</span>
+<span id="cb28-71"><a href="#cb28-71" tabindex="-1"></a></span>
+<span id="cb28-72"><a href="#cb28-72" tabindex="-1"></a></span>
+<span id="cb28-73"><a href="#cb28-73" tabindex="-1"></a><span class="co"># Encerrar o cluster</span></span>
+<span id="cb28-74"><a href="#cb28-74" tabindex="-1"></a><span class="fu">stopCluster</span>(cl)</span>
+<span id="cb28-75"><a href="#cb28-75" tabindex="-1"></a></span>
+<span id="cb28-76"><a href="#cb28-76" tabindex="-1"></a><span class="co"># Salvar resultados</span></span>
+<span id="cb28-77"><a href="#cb28-77" tabindex="-1"></a><span class="fu">saveRDS</span>(results_cv_GAPIT, <span class="at">file =</span> <span class="st">&quot;output/gwas_results.rds&quot;</span>)</span></code></pre></div>
+</div>
+</div>
+<div id="importância-de-marcadores" class="section level2">
+<h2>5. Importância de Marcadores</h2>
+<p>Para calcular a importância dos marcadores SNP nos modelos de machine
+learning, utilizamos os resultados de validação cruzada (CV) de cada
+modelo obtidos pelo script de <a
+href="https://wevertongomescosta.github.io/Machine-learning-e-redes-neurais-artificiais-no-melhoramento-genetico-do-cafeeiro/gws_dados_reais.html">GWS</a>
+no passo anterior.</p>
+<p>A função <code>flatten_importance</code> é responsável por ler os
+arquivos de resultados, extrair as importâncias e adicionar metadados
+relevantes como Trait, Rep, Fold e model.</p>
+<div class="sourceCode" id="cb29"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" tabindex="-1"></a>flatten_importance <span class="ot">&lt;-</span> <span class="cf">function</span>(path, model_name) {</span>
+<span id="cb29-2"><a href="#cb29-2" tabindex="-1"></a>  <span class="fu">readRDS</span>(path) <span class="sc">%&gt;%</span></span>
+<span id="cb29-3"><a href="#cb29-3" tabindex="-1"></a>    <span class="co"># injeta nos próprios dfs de imp: Trait, Rep, Fold e model</span></span>
+<span id="cb29-4"><a href="#cb29-4" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
+<span id="cb29-5"><a href="#cb29-5" tabindex="-1"></a>      <span class="at">imp =</span> <span class="fu">pmap</span>(</span>
+<span id="cb29-6"><a href="#cb29-6" tabindex="-1"></a>        <span class="fu">list</span>(imp, Trait, Rep, Fold),</span>
+<span id="cb29-7"><a href="#cb29-7" tabindex="-1"></a>        <span class="sc">~</span> .x <span class="sc">%&gt;%</span></span>
+<span id="cb29-8"><a href="#cb29-8" tabindex="-1"></a>           <span class="fu">mutate</span>(</span>
+<span id="cb29-9"><a href="#cb29-9" tabindex="-1"></a>             <span class="at">Trait  =</span> ..<span class="dv">2</span>,</span>
+<span id="cb29-10"><a href="#cb29-10" tabindex="-1"></a>             <span class="at">Rep    =</span> ..<span class="dv">3</span>,</span>
+<span id="cb29-11"><a href="#cb29-11" tabindex="-1"></a>             <span class="at">Fold   =</span> ..<span class="dv">4</span>,</span>
+<span id="cb29-12"><a href="#cb29-12" tabindex="-1"></a>             <span class="at">model  =</span> model_name</span>
+<span id="cb29-13"><a href="#cb29-13" tabindex="-1"></a>           )</span>
+<span id="cb29-14"><a href="#cb29-14" tabindex="-1"></a>      )</span>
+<span id="cb29-15"><a href="#cb29-15" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span></span>
+<span id="cb29-16"><a href="#cb29-16" tabindex="-1"></a>    <span class="co"># mantém só a lista imp (já com metadados) e desaninha tudo</span></span>
+<span id="cb29-17"><a href="#cb29-17" tabindex="-1"></a>    <span class="fu">select</span>(imp) <span class="sc">%&gt;%</span></span>
+<span id="cb29-18"><a href="#cb29-18" tabindex="-1"></a>    <span class="fu">unnest</span>(<span class="at">cols =</span> imp)</span>
+<span id="cb29-19"><a href="#cb29-19" tabindex="-1"></a>}</span>
+<span id="cb29-20"><a href="#cb29-20" tabindex="-1"></a></span>
+<span id="cb29-21"><a href="#cb29-21" tabindex="-1"></a><span class="co"># Vetores de arquivos e nomes</span></span>
+<span id="cb29-22"><a href="#cb29-22" tabindex="-1"></a>models <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;MARS_1&quot;</span>, <span class="st">&quot;MARS_2&quot;</span>, <span class="st">&quot;MARS_3&quot;</span>, <span class="st">&quot;DT&quot;</span>, <span class="st">&quot;Bag&quot;</span>, <span class="st">&quot;RF&quot;</span>, <span class="st">&quot;GBM&quot;</span>)</span>
+<span id="cb29-23"><a href="#cb29-23" tabindex="-1"></a>paths  <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;output/real_results_cv_&quot;</span>, models, <span class="st">&quot;.rds&quot;</span>)</span>
+<span id="cb29-24"><a href="#cb29-24" tabindex="-1"></a></span>
+<span id="cb29-25"><a href="#cb29-25" tabindex="-1"></a><span class="co"># Combina todas as tabelas num único data.frame</span></span>
+<span id="cb29-26"><a href="#cb29-26" tabindex="-1"></a>imp_ML <span class="ot">&lt;-</span> <span class="fu">map2_dfr</span>(paths, models, flatten_importance)</span>
+<span id="cb29-27"><a href="#cb29-27" tabindex="-1"></a><span class="co"># Salvar resultados de importância</span></span>
+<span id="cb29-28"><a href="#cb29-28" tabindex="-1"></a><span class="fu">saveRDS</span>(imp_ML, <span class="at">file =</span> <span class="st">&quot;output/importance_ML.rds&quot;</span>)</span></code></pre></div>
+<p>Como a importância dos SNPs foi calculada para cada repetição e fold,
+precisamos calcular a média dos efeitos dos SNPs por trait e modelo.
+Isso nos permitirá identificar quais SNPs são mais relevantes em geral,
+independentemente do modelo específico utilizado.</p>
+<div class="sourceCode" id="cb30"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" tabindex="-1"></a><span class="co"># Média dos efeitos dos SNPs por trait e modelo</span></span>
+<span id="cb30-2"><a href="#cb30-2" tabindex="-1"></a>imp_ML_mean <span class="ot">&lt;-</span> imp_ML <span class="sc">%&gt;%</span></span>
+<span id="cb30-3"><a href="#cb30-3" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">effect =</span> Overall) <span class="sc">%&gt;%</span></span>
+<span id="cb30-4"><a href="#cb30-4" tabindex="-1"></a>  <span class="fu">group_by</span>(marker, Trait, model) <span class="sc">%&gt;%</span></span>
+<span id="cb30-5"><a href="#cb30-5" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">effect =</span> <span class="fu">mean</span>(effect, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="at">.groups =</span> <span class="st">&quot;drop&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb30-6"><a href="#cb30-6" tabindex="-1"></a>  <span class="fu">arrange</span>(Trait, model, <span class="fu">desc</span>(effect))</span>
+<span id="cb30-7"><a href="#cb30-7" tabindex="-1"></a></span>
+<span id="cb30-8"><a href="#cb30-8" tabindex="-1"></a><span class="co"># Renomear colunas para manter consistência</span></span>
+<span id="cb30-9"><a href="#cb30-9" tabindex="-1"></a><span class="fu">colnames</span>(imp_ML_mean) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;SNP&quot;</span>, <span class="st">&quot;trait&quot;</span>, <span class="st">&quot;model&quot;</span>, <span class="st">&quot;effect&quot;</span>)</span>
+<span id="cb30-10"><a href="#cb30-10" tabindex="-1"></a></span>
+<span id="cb30-11"><a href="#cb30-11" tabindex="-1"></a><span class="co"># Salvar resultados de importância média</span></span>
+<span id="cb30-12"><a href="#cb30-12" tabindex="-1"></a><span class="fu">saveRDS</span>(imp_ML_mean, <span class="at">file =</span> <span class="st">&quot;output/importance_ML_mean.rds&quot;</span>)</span></code></pre></div>
+</div>
+<div id="combinar-gwas-e-ml" class="section level2">
+<h2>6. Combinar GWAS e ML</h2>
+<p>Para combinar os resultados de GWAS com a importância dos marcadores
+obtida pelos modelos de machine learning, unimos os dois conjuntos de
+dados. Isso nos permitirá analisar quais SNPs são significativos em
+termos estatísticos e também quais têm maior importância preditiva nos
+modelos de machine learning.</p>
+<div class="sourceCode" id="cb31"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" tabindex="-1"></a><span class="co"># Unir resultados de GWAS com importância dos modelos de ML</span></span>
+<span id="cb31-2"><a href="#cb31-2" tabindex="-1"></a>results_combined <span class="ot">&lt;-</span> results_cv_GAPIT <span class="sc">%&gt;%</span></span>
+<span id="cb31-3"><a href="#cb31-3" tabindex="-1"></a>  <span class="fu">full_join</span>(imp_ML_mean) <span class="sc">%&gt;%</span></span>
+<span id="cb31-4"><a href="#cb31-4" tabindex="-1"></a>  <span class="fu">select</span>(trait, model, SNP, P.value, effect)</span>
+<span id="cb31-5"><a href="#cb31-5" tabindex="-1"></a></span>
+<span id="cb31-6"><a href="#cb31-6" tabindex="-1"></a><span class="co"># Salvar resultados combinados</span></span>
+<span id="cb31-7"><a href="#cb31-7" tabindex="-1"></a><span class="fu">saveRDS</span>(results_combined, <span class="at">file =</span> <span class="st">&quot;output/gwas_combined_results.rds&quot;</span>)</span></code></pre></div>
+</div>
+<div id="pós-processamento" class="section level2">
+<h2>7. Pós-processamento</h2>
+<p>Os resultados combinados de efeitos dos marcadores devem ser
+processados para facilitar a visualização e interpretação. Isso inclui a
+extração de informações adicionais, como o cromossomo e a posição dos
+SNPs, e a normalização dos efeitos para cada trait e modelo.</p>
+<div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" tabindex="-1"></a>results_combined <span class="ot">&lt;-</span> results_combined <span class="sc">%&gt;%</span> </span>
+<span id="cb32-2"><a href="#cb32-2" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Chr =</span> <span class="fu">str_split_i</span>(SNP, <span class="st">&quot;:&quot;</span>, <span class="dv">1</span>),</span>
+<span id="cb32-3"><a href="#cb32-3" tabindex="-1"></a>         <span class="at">Chr =</span> <span class="fu">str_split_i</span>(Chr, <span class="st">&quot;chr&quot;</span>,<span class="dv">2</span>),</span>
+<span id="cb32-4"><a href="#cb32-4" tabindex="-1"></a>         <span class="at">Pos =</span> <span class="fu">str_split_i</span>(SNP, <span class="st">&quot;:&quot;</span>, <span class="dv">2</span>)</span>
+<span id="cb32-5"><a href="#cb32-5" tabindex="-1"></a>         )</span></code></pre></div>
+<div id="normalizando-a-importância" class="section level3">
+<h3>7.1 Normalizando a importância</h3>
+<p>Para facilitar a comparação entre os efeitos dos marcadores,
+normalizamos os valores de efeito para uma escala de 0 a 10. Isso ajuda
+a visualizar a importância relativa dos SNPs em diferentes traços e
+modelos.</p>
+<div class="sourceCode" id="cb33"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" tabindex="-1"></a>normalized_imp <span class="ot">&lt;-</span> results_combined <span class="sc">%&gt;%</span></span>
+<span id="cb33-2"><a href="#cb33-2" tabindex="-1"></a>  <span class="fu">group_by</span>(model, trait) <span class="sc">%&gt;%</span></span>
+<span id="cb33-3"><a href="#cb33-3" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">effect_res =</span> scales<span class="sc">::</span><span class="fu">rescale</span>(effect, <span class="at">to =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">10</span>), <span class="at">finite =</span> F)) <span class="sc">%&gt;%</span></span>
+<span id="cb33-4"><a href="#cb33-4" tabindex="-1"></a>  <span class="fu">ungroup</span>()</span></code></pre></div>
+</div>
+<div id="organizando-dados-para-plot" class="section level3">
+<h3>7.2 Organizando dados para plot</h3>
+<p>Para associar os marcadores SNP às regiões do QTL, precisamos criar
+um índice contínuo para cada SNP, que será utilizado para plotar os
+resultados de forma ordenada. Isso nos permitirá visualizar a
+distribuição dos SNPs ao longo dos cromossomos e identificar as regiões
+de interesse.</p>
+<div class="sourceCode" id="cb34"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" tabindex="-1"></a>plot_data <span class="ot">&lt;-</span> normalized_imp <span class="sc">%&gt;%</span></span>
+<span id="cb34-2"><a href="#cb34-2" tabindex="-1"></a>  <span class="fu">filter</span>(SNP <span class="sc">!=</span> <span class="st">&quot;&quot;</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb34-3"><a href="#cb34-3" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">as.numeric</span>(Chr), SNP) <span class="sc">%&gt;%</span> </span>
+<span id="cb34-4"><a href="#cb34-4" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">index =</span> <span class="fu">row_number</span>()                                <span class="co"># 3) Índice contínuo</span></span>
+<span id="cb34-5"><a href="#cb34-5" tabindex="-1"></a>)</span></code></pre></div>
+</div>
+<div id="marcadores-signifciativos" class="section level3">
+<h3>7.3 Marcadores signifciativos</h3>
+<p>Para cada modelo e trait, definimos um limiar de significância para
+identificar quais SNPs são considerados significativos. Utilizamos o
+método de correção de Bonferroni para ajustar os valores p, garantindo
+que os resultados sejam robustos e confiáveis. Adotamos um limiar de
+0.05 e 0.01 para identificar SNPs significativos, permitindo uma análise
+mais rigorosa dos resultados.</p>
+<p>Para os modelos GAPIT, utilizamos os valores de P.value, enquanto
+para os modelos de machine learning, utilizamos a importância dos
+efeitos dos SNPs. Os SNPs significativos são então armazenados em data
+frames separados para cada limiar de significância.</p>
+<div class="sourceCode" id="cb35"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" tabindex="-1"></a><span class="co"># Definindo o limiar de significância</span></span>
+<span id="cb35-2"><a href="#cb35-2" tabindex="-1"></a>alpha <span class="ot">&lt;-</span> <span class="fl">0.05</span></span>
+<span id="cb35-3"><a href="#cb35-3" tabindex="-1"></a>n.markers <span class="ot">&lt;-</span> <span class="fu">length</span>(<span class="fu">unique</span>(plot_data<span class="sc">$</span>SNP))</span>
+<span id="cb35-4"><a href="#cb35-4" tabindex="-1"></a>threshold_05 <span class="ot">&lt;-</span> alpha <span class="sc">/</span> n.markers</span>
+<span id="cb35-5"><a href="#cb35-5" tabindex="-1"></a></span>
+<span id="cb35-6"><a href="#cb35-6" tabindex="-1"></a>alpha <span class="ot">&lt;-</span> <span class="fl">0.01</span></span>
+<span id="cb35-7"><a href="#cb35-7" tabindex="-1"></a>n.markers <span class="ot">&lt;-</span> <span class="fu">length</span>(<span class="fu">unique</span>(plot_data<span class="sc">$</span>SNP))</span>
+<span id="cb35-8"><a href="#cb35-8" tabindex="-1"></a>threshold_01 <span class="ot">&lt;-</span> alpha <span class="sc">/</span> n.markers</span>
+<span id="cb35-9"><a href="#cb35-9" tabindex="-1"></a></span>
+<span id="cb35-10"><a href="#cb35-10" tabindex="-1"></a><span class="co"># Filtrando resultados significativos</span></span>
+<span id="cb35-11"><a href="#cb35-11" tabindex="-1"></a>results_cv_GAPIT_sig_05 <span class="ot">&lt;-</span> plot_data <span class="sc">%&gt;%</span></span>
+<span id="cb35-12"><a href="#cb35-12" tabindex="-1"></a>  <span class="fu">filter</span>(model<span class="sc">%in%</span> models) <span class="sc">%&gt;%</span></span>
+<span id="cb35-13"><a href="#cb35-13" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">-</span><span class="fu">log10</span>(P.value) <span class="sc">&gt;</span> <span class="sc">-</span><span class="fu">log10</span>(threshold_01)) <span class="sc">%&gt;%</span></span>
+<span id="cb35-14"><a href="#cb35-14" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">sig =</span> <span class="fu">paste</span>(trait, SNP, <span class="at">sep =</span> <span class="st">&quot;_&quot;</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb35-15"><a href="#cb35-15" tabindex="-1"></a>  <span class="fu">droplevels</span>()</span>
+<span id="cb35-16"><a href="#cb35-16" tabindex="-1"></a></span>
+<span id="cb35-17"><a href="#cb35-17" tabindex="-1"></a>results_cv_GAPIT_sig_01 <span class="ot">&lt;-</span> plot_data <span class="sc">%&gt;%</span></span>
+<span id="cb35-18"><a href="#cb35-18" tabindex="-1"></a>  <span class="fu">filter</span>(model <span class="sc">%in%</span> models) <span class="sc">%&gt;%</span></span>
+<span id="cb35-19"><a href="#cb35-19" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">-</span><span class="fu">log10</span>(P.value) <span class="sc">&gt;</span> <span class="sc">-</span><span class="fu">log10</span>(threshold_01)) <span class="sc">%&gt;%</span></span>
+<span id="cb35-20"><a href="#cb35-20" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">sig =</span> <span class="fu">paste</span>(trait, SNP, <span class="at">sep =</span> <span class="st">&quot;_&quot;</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb35-21"><a href="#cb35-21" tabindex="-1"></a>  <span class="fu">droplevels</span>()</span>
+<span id="cb35-22"><a href="#cb35-22" tabindex="-1"></a></span>
+<span id="cb35-23"><a href="#cb35-23" tabindex="-1"></a>results_cv_imp_ml_sig_05 <span class="ot">&lt;-</span> plot_data <span class="sc">%&gt;%</span> </span>
+<span id="cb35-24"><a href="#cb35-24" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span>(model <span class="sc">%in%</span> models)) <span class="sc">%&gt;%</span></span>
+<span id="cb35-25"><a href="#cb35-25" tabindex="-1"></a>  <span class="fu">filter</span>(effect_res <span class="sc">&gt;</span> <span class="sc">-</span><span class="fu">log10</span>(threshold_05)) <span class="sc">%&gt;%</span></span>
+<span id="cb35-26"><a href="#cb35-26" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">sig =</span> <span class="fu">paste</span>(trait, SNP, <span class="at">sep =</span> <span class="st">&quot;_&quot;</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb35-27"><a href="#cb35-27" tabindex="-1"></a>  <span class="fu">droplevels</span>()</span>
+<span id="cb35-28"><a href="#cb35-28" tabindex="-1"></a></span>
+<span id="cb35-29"><a href="#cb35-29" tabindex="-1"></a>results_cv_imp_ml_sig_01 <span class="ot">&lt;-</span> plot_data <span class="sc">%&gt;%</span></span>
+<span id="cb35-30"><a href="#cb35-30" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span>(model <span class="sc">%in%</span> models)) <span class="sc">%&gt;%</span></span>
+<span id="cb35-31"><a href="#cb35-31" tabindex="-1"></a>  <span class="fu">filter</span>(effect_res <span class="sc">&gt;</span> <span class="sc">-</span><span class="fu">log10</span>(threshold_01)) <span class="sc">%&gt;%</span></span>
+<span id="cb35-32"><a href="#cb35-32" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">sig =</span> <span class="fu">paste</span>(trait, SNP, <span class="at">sep =</span> <span class="st">&quot;_&quot;</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb35-33"><a href="#cb35-33" tabindex="-1"></a>  <span class="fu">droplevels</span>()</span></code></pre></div>
+</div>
+<div id="manhattan-plot" class="section level3">
+<h3>7.4 Manhattan plot</h3>
+<p>O Manhattan plot é uma ferramenta visual poderosa para identificar
+SNPs significativos em estudos de GWAS. Ele exibe os valores
+-log10(P.value) dos SNPs ao longo dos cromossomos, permitindo a
+identificação rápida de regiões com associações genéticas
+significativas. Neste script, geramos Manhattan plots para cada trait,
+destacando os SNPs que superam os limiares de significância
+definidos.</p>
+<div class="sourceCode" id="cb36"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> traits) {</span>
+<span id="cb36-2"><a href="#cb36-2" tabindex="-1"></a>  <span class="co"># Prepara dados básicos e índice</span></span>
+<span id="cb36-3"><a href="#cb36-3" tabindex="-1"></a>  plotgwasall <span class="ot">&lt;-</span> plot_data <span class="sc">%&gt;%</span></span>
+<span id="cb36-4"><a href="#cb36-4" tabindex="-1"></a>    <span class="fu">filter</span>(trait <span class="sc">==</span> i, <span class="sc">!</span><span class="fu">is.na</span>(Chr)) <span class="sc">%&gt;%</span></span>
+<span id="cb36-5"><a href="#cb36-5" tabindex="-1"></a>    <span class="fu">arrange</span>(<span class="fu">as.numeric</span>(Chr), SNP) <span class="sc">%&gt;%</span></span>
+<span id="cb36-6"><a href="#cb36-6" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
+<span id="cb36-7"><a href="#cb36-7" tabindex="-1"></a>      <span class="at">Chr   =</span> <span class="fu">factor</span>(Chr, <span class="at">levels =</span> <span class="fu">as.character</span>(<span class="dv">0</span><span class="sc">:</span><span class="dv">11</span>))</span>
+<span id="cb36-8"><a href="#cb36-8" tabindex="-1"></a>    )</span>
+<span id="cb36-9"><a href="#cb36-9" tabindex="-1"></a>  </span>
+<span id="cb36-10"><a href="#cb36-10" tabindex="-1"></a>  <span class="co"># Cria um índice para alocar o Chr ao longo do eixo x</span></span>
+<span id="cb36-11"><a href="#cb36-11" tabindex="-1"></a>  axisdf <span class="ot">&lt;-</span> plotgwasall <span class="sc">%&gt;%</span></span>
+<span id="cb36-12"><a href="#cb36-12" tabindex="-1"></a>    <span class="fu">group_by</span>(Chr) <span class="sc">%&gt;%</span></span>
+<span id="cb36-13"><a href="#cb36-13" tabindex="-1"></a>    <span class="fu">summarise</span>(<span class="at">center =</span> (<span class="fu">min</span>(index) <span class="sc">+</span> <span class="fu">max</span>(index)) <span class="sc">/</span> <span class="dv">2</span>, <span class="at">.groups =</span> <span class="st">&quot;drop&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb36-14"><a href="#cb36-14" tabindex="-1"></a>    <span class="fu">arrange</span>(<span class="fu">as.integer</span>(<span class="fu">as.character</span>(Chr)))</span>
+<span id="cb36-15"><a href="#cb36-15" tabindex="-1"></a></span>
+<span id="cb36-16"><a href="#cb36-16" tabindex="-1"></a>  <span class="co"># Paleta gdocs de 12 cores</span></span>
+<span id="cb36-17"><a href="#cb36-17" tabindex="-1"></a>  gdocs <span class="ot">&lt;-</span> <span class="fu">gdocs_pal</span>()(<span class="dv">24</span>)[<span class="sc">-</span><span class="dv">12</span>]</span>
+<span id="cb36-18"><a href="#cb36-18" tabindex="-1"></a>  </span>
+<span id="cb36-19"><a href="#cb36-19" tabindex="-1"></a>  <span class="co"># GWAS</span></span>
+<span id="cb36-20"><a href="#cb36-20" tabindex="-1"></a>  figure_gwas <span class="ot">&lt;-</span> plotgwasall <span class="sc">%&gt;%</span></span>
+<span id="cb36-21"><a href="#cb36-21" tabindex="-1"></a>    <span class="fu">filter</span>(model <span class="sc">%in%</span> models) <span class="sc">%&gt;%</span></span>
+<span id="cb36-22"><a href="#cb36-22" tabindex="-1"></a>    <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> index, <span class="at">y =</span> <span class="sc">-</span><span class="fu">log10</span>(P.value), <span class="at">color =</span> Chr)) <span class="sc">+</span></span>
+<span id="cb36-23"><a href="#cb36-23" tabindex="-1"></a>    <span class="fu">geom_point</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>, <span class="at">size =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb36-24"><a href="#cb36-24" tabindex="-1"></a>    <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> <span class="sc">-</span><span class="fu">log10</span>(threshold_05), <span class="at">linetype =</span> <span class="st">&quot;dashed&quot;</span>, <span class="at">color =</span> <span class="st">&quot;red&quot;</span>) <span class="sc">+</span></span>
+<span id="cb36-25"><a href="#cb36-25" tabindex="-1"></a>    <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> <span class="sc">-</span><span class="fu">log10</span>(threshold_01), <span class="at">linetype =</span> <span class="st">&quot;dashed&quot;</span>, <span class="at">color =</span> <span class="st">&quot;blue&quot;</span>) <span class="sc">+</span></span>
+<span id="cb36-26"><a href="#cb36-26" tabindex="-1"></a>    <span class="fu">scale_x_continuous</span>(<span class="at">breaks =</span> axisdf<span class="sc">$</span>center, <span class="at">labels =</span> axisdf<span class="sc">$</span>Chr) <span class="sc">+</span></span>
+<span id="cb36-27"><a href="#cb36-27" tabindex="-1"></a>    <span class="fu">scale_y_continuous</span>(<span class="at">limits =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">10</span><span class="sc">*</span><span class="fl">1.1</span>), <span class="at">breaks =</span> <span class="fu">seq</span>(<span class="dv">0</span>,<span class="dv">10</span>,<span class="dv">2</span>)) <span class="sc">+</span></span>
+<span id="cb36-28"><a href="#cb36-28" tabindex="-1"></a>    <span class="fu">facet_wrap</span>(model <span class="sc">~</span> ., <span class="at">ncol =</span> <span class="dv">1</span>, <span class="at">scales =</span> <span class="st">&quot;free_y&quot;</span>, <span class="at">strip.position =</span> <span class="st">&quot;right&quot;</span>) <span class="sc">+</span></span>
+<span id="cb36-29"><a href="#cb36-29" tabindex="-1"></a>    <span class="fu">scale_color_manual</span>(<span class="at">values =</span> gdocs, <span class="at">drop =</span> <span class="cn">FALSE</span>) <span class="sc">+</span></span>
+<span id="cb36-30"><a href="#cb36-30" tabindex="-1"></a>    <span class="fu">theme_hc</span>() <span class="sc">+</span> <span class="fu">xlab</span>(<span class="st">&quot;Linkage Group&quot;</span>) <span class="sc">+</span> <span class="fu">ylab</span>(<span class="fu">expression</span>(<span class="sc">-</span>log[<span class="dv">10</span>](P.value))) <span class="sc">+</span></span>
+<span id="cb36-31"><a href="#cb36-31" tabindex="-1"></a>    <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">&quot;none&quot;</span>, <span class="at">axis.ticks.x =</span> <span class="fu">element_blank</span>(), <span class="at">panel.grid.major.x =</span> <span class="fu">element_blank</span>())</span>
+<span id="cb36-32"><a href="#cb36-32" tabindex="-1"></a></span>
+<span id="cb36-33"><a href="#cb36-33" tabindex="-1"></a>  <span class="co"># ML</span></span>
+<span id="cb36-34"><a href="#cb36-34" tabindex="-1"></a>  figure_ML <span class="ot">&lt;-</span> plotgwasall <span class="sc">%&gt;%</span></span>
+<span id="cb36-35"><a href="#cb36-35" tabindex="-1"></a>    <span class="fu">filter</span>(<span class="sc">!</span>(model <span class="sc">%in%</span> models)) <span class="sc">%&gt;%</span></span>
+<span id="cb36-36"><a href="#cb36-36" tabindex="-1"></a>    <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> index, <span class="at">y =</span> effect_res, <span class="at">color =</span> Chr)) <span class="sc">+</span></span>
+<span id="cb36-37"><a href="#cb36-37" tabindex="-1"></a>    <span class="fu">geom_point</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>, <span class="at">size =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb36-38"><a href="#cb36-38" tabindex="-1"></a>    <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> <span class="sc">-</span><span class="fu">log10</span>(threshold_05), <span class="at">linetype =</span> <span class="st">&quot;dashed&quot;</span>, <span class="at">color =</span> <span class="st">&quot;red&quot;</span>) <span class="sc">+</span></span>
+<span id="cb36-39"><a href="#cb36-39" tabindex="-1"></a>    <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> <span class="sc">-</span><span class="fu">log10</span>(threshold_01), <span class="at">linetype =</span> <span class="st">&quot;dashed&quot;</span>, <span class="at">color =</span> <span class="st">&quot;blue&quot;</span>) <span class="sc">+</span></span>
+<span id="cb36-40"><a href="#cb36-40" tabindex="-1"></a>    <span class="fu">scale_x_continuous</span>(<span class="at">breaks =</span> axisdf<span class="sc">$</span>center, <span class="at">labels =</span> axisdf<span class="sc">$</span>Chr) <span class="sc">+</span></span>
+<span id="cb36-41"><a href="#cb36-41" tabindex="-1"></a>    <span class="fu">scale_y_continuous</span>(<span class="at">limits =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">10</span><span class="sc">*</span><span class="fl">1.1</span>), <span class="at">breaks =</span> <span class="fu">seq</span>(<span class="dv">0</span>,<span class="dv">10</span>,<span class="dv">2</span>)) <span class="sc">+</span></span>
+<span id="cb36-42"><a href="#cb36-42" tabindex="-1"></a>    <span class="fu">facet_wrap</span>(model <span class="sc">~</span> ., <span class="at">ncol =</span> <span class="dv">1</span>, <span class="at">scales =</span> <span class="st">&quot;free_y&quot;</span>, <span class="at">strip.position =</span> <span class="st">&quot;right&quot;</span>) <span class="sc">+</span></span>
+<span id="cb36-43"><a href="#cb36-43" tabindex="-1"></a>    <span class="fu">scale_color_manual</span>(<span class="at">values =</span> gdocs, <span class="at">drop =</span> <span class="cn">FALSE</span>) <span class="sc">+</span></span>
+<span id="cb36-44"><a href="#cb36-44" tabindex="-1"></a>    <span class="fu">theme_hc</span>() <span class="sc">+</span> <span class="fu">xlab</span>(<span class="st">&quot;Linkage Group&quot;</span>) <span class="sc">+</span> <span class="fu">ylab</span>(<span class="st">&quot;Importance&quot;</span>) <span class="sc">+</span></span>
+<span id="cb36-45"><a href="#cb36-45" tabindex="-1"></a>    <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">&quot;none&quot;</span>, <span class="at">axis.ticks.x =</span> <span class="fu">element_blank</span>(), <span class="at">panel.grid.major.x =</span> <span class="fu">element_blank</span>())</span>
+<span id="cb36-46"><a href="#cb36-46" tabindex="-1"></a></span>
+<span id="cb36-47"><a href="#cb36-47" tabindex="-1"></a>  <span class="co"># Anotações</span></span>
+<span id="cb36-48"><a href="#cb36-48" tabindex="-1"></a>  figure_gwas <span class="ot">&lt;-</span> figure_gwas <span class="sc">+</span></span>
+<span id="cb36-49"><a href="#cb36-49" tabindex="-1"></a>    <span class="fu">geom_text_repel</span>(<span class="at">data =</span> results_cv_GAPIT_sig_05 <span class="sc">%&gt;%</span> <span class="fu">filter</span>(trait <span class="sc">==</span> i),</span>
+<span id="cb36-50"><a href="#cb36-50" tabindex="-1"></a>                    <span class="fu">aes</span>(<span class="at">x =</span> index, <span class="at">y =</span> <span class="sc">-</span><span class="fu">log10</span>(P.value), <span class="at">label =</span> SNP),</span>
+<span id="cb36-51"><a href="#cb36-51" tabindex="-1"></a>                    <span class="at">size =</span> <span class="dv">3</span>, <span class="at">segment.color =</span> <span class="st">&quot;gray50&quot;</span>, <span class="at">max.overlaps =</span> <span class="dv">10</span>) <span class="sc">+</span></span>
+<span id="cb36-52"><a href="#cb36-52" tabindex="-1"></a>    <span class="fu">geom_text_repel</span>(<span class="at">data =</span> results_cv_GAPIT_sig_01 <span class="sc">%&gt;%</span> <span class="fu">filter</span>(trait <span class="sc">==</span> i),</span>
+<span id="cb36-53"><a href="#cb36-53" tabindex="-1"></a>                    <span class="fu">aes</span>(<span class="at">x =</span> index, <span class="at">y =</span> <span class="sc">-</span><span class="fu">log10</span>(P.value), <span class="at">label =</span> SNP),</span>
+<span id="cb36-54"><a href="#cb36-54" tabindex="-1"></a>                    <span class="at">size =</span> <span class="dv">3</span>, <span class="at">segment.color =</span> <span class="st">&quot;gray50&quot;</span>, <span class="at">max.overlaps =</span> <span class="dv">10</span>)</span>
+<span id="cb36-55"><a href="#cb36-55" tabindex="-1"></a></span>
+<span id="cb36-56"><a href="#cb36-56" tabindex="-1"></a>  figure_ML <span class="ot">&lt;-</span> figure_ML <span class="sc">+</span></span>
+<span id="cb36-57"><a href="#cb36-57" tabindex="-1"></a>    <span class="fu">geom_text_repel</span>(<span class="at">data =</span> results_cv_imp_ml_sig_05 <span class="sc">%&gt;%</span> <span class="fu">filter</span>(trait <span class="sc">==</span> i),</span>
+<span id="cb36-58"><a href="#cb36-58" tabindex="-1"></a>                    <span class="fu">aes</span>(<span class="at">x =</span> index, <span class="at">y =</span> effect_res, <span class="at">label =</span> SNP),</span>
+<span id="cb36-59"><a href="#cb36-59" tabindex="-1"></a>                    <span class="at">size =</span> <span class="dv">3</span>, <span class="at">segment.color =</span> <span class="st">&quot;gray50&quot;</span>, <span class="at">max.overlaps =</span> <span class="dv">10</span>) <span class="sc">+</span></span>
+<span id="cb36-60"><a href="#cb36-60" tabindex="-1"></a>    <span class="fu">geom_text_repel</span>(<span class="at">data =</span> results_cv_imp_ml_sig_01 <span class="sc">%&gt;%</span> <span class="fu">filter</span>(trait <span class="sc">==</span> i),</span>
+<span id="cb36-61"><a href="#cb36-61" tabindex="-1"></a>                    <span class="fu">aes</span>(<span class="at">x =</span> index, <span class="at">y =</span> effect_res, <span class="at">label =</span> SNP),</span>
+<span id="cb36-62"><a href="#cb36-62" tabindex="-1"></a>                    <span class="at">size =</span> <span class="dv">3</span>, <span class="at">segment.color =</span> <span class="st">&quot;gray50&quot;</span>, <span class="at">max.overlaps =</span> <span class="dv">10</span>)</span>
+<span id="cb36-63"><a href="#cb36-63" tabindex="-1"></a></span>
+<span id="cb36-64"><a href="#cb36-64" tabindex="-1"></a>  <span class="co"># Combina e salva</span></span>
+<span id="cb36-65"><a href="#cb36-65" tabindex="-1"></a>  p <span class="ot">&lt;-</span> cowplot<span class="sc">::</span><span class="fu">plot_grid</span>(figure_gwas, figure_ML, <span class="at">ncol =</span> <span class="dv">2</span>,</span>
+<span id="cb36-66"><a href="#cb36-66" tabindex="-1"></a>                          <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">&quot;GWAS&quot;</span>,<span class="st">&quot;ML&quot;</span>), <span class="at">label_size =</span> <span class="dv">10</span>)</span>
+<span id="cb36-67"><a href="#cb36-67" tabindex="-1"></a>  </span>
+<span id="cb36-68"><a href="#cb36-68" tabindex="-1"></a>  <span class="co"># Ajusta título e tema</span></span>
+<span id="cb36-69"><a href="#cb36-69" tabindex="-1"></a>  p <span class="ot">&lt;-</span> p <span class="sc">+</span> <span class="fu">ggtitle</span>(<span class="fu">paste</span>(<span class="st">&quot;Manhattan Plot for&quot;</span>, i)) <span class="sc">+</span> <span class="fu">theme</span>(<span class="at">plot.title =</span> <span class="fu">element_text</span>(<span class="at">hjust =</span> <span class="fl">0.5</span>, <span class="at">size =</span> <span class="dv">15</span>),</span>
+<span id="cb36-70"><a href="#cb36-70" tabindex="-1"></a>                                                           <span class="at">text =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">12</span>))</span>
+<span id="cb36-71"><a href="#cb36-71" tabindex="-1"></a>  </span>
+<span id="cb36-72"><a href="#cb36-72" tabindex="-1"></a>  <span class="co"># Exibe o plot</span></span>
+<span id="cb36-73"><a href="#cb36-73" tabindex="-1"></a>  <span class="fu">print</span>(p)</span>
+<span id="cb36-74"><a href="#cb36-74" tabindex="-1"></a>  </span>
+<span id="cb36-75"><a href="#cb36-75" tabindex="-1"></a>  <span class="co"># Salva o plot</span></span>
+<span id="cb36-76"><a href="#cb36-76" tabindex="-1"></a>  <span class="fu">ggsave</span>(<span class="fu">paste0</span>(<span class="st">&quot;output/manhattan_&quot;</span>, i, <span class="st">&quot;.tiff&quot;</span>), p, <span class="at">width =</span> <span class="dv">16</span>, <span class="at">height =</span> <span class="dv">12</span>, <span class="at">dpi =</span> <span class="dv">300</span>)</span>
+<span id="cb36-77"><a href="#cb36-77" tabindex="-1"></a>}</span></code></pre></div>
+<p><img src="figure/gwas_dados_reais.Rmd/manhatan-plot-1.png" width="100%" style="display: block; margin: auto;" /><img src="figure/gwas_dados_reais.Rmd/manhatan-plot-2.png" width="100%" style="display: block; margin: auto;" /><img src="figure/gwas_dados_reais.Rmd/manhatan-plot-3.png" width="100%" style="display: block; margin: auto;" /></p>
+</div>
+</div>
+<div id="resultados" class="section level2">
+<h2>8. Resultados</h2>
+<p>Finalizamos conlcuindo que para nenhum modelo de GWAS encontramos
+marcadores com efeito significativo, enquanto que para os métodos de ML
+encontramos marcadores que possam ser efeitos significativos das
+características avaliadas.</p>
+<p>Entre os marcadores identificados como mais recorrentes em nossos
+modelos, destacam‐se dois SNPs que apareceram em cinco ocasiões: o locus
+chr2:5400524, associado ao traço “Cer”, e o locus chr6:11869033,
+associado ao traço “Prod.Cor”. Esses resultados sugerem que essas
+posições genômicas são consistentemente relevantes para as variações
+desses fenótipos. Para o traço “BM”, observamos quatro marcadores com
+três repetições cada – chr0:163908002, chr2:5400524, chr6:2818374 e
+chr8:26493958 – indicando várias regiões de interesse que merecem
+investigação adicional. Ainda no traço “Cer”, além do SNP principal,
+dois outros loci (chr5:26339556 e chr7:11934703) também surgiram em três
+modelos. Para “Prod.Cor”, além de chr6:11869033, o SNP chr9:16308773 foi
+identificado três vezes.</p>
+<br>
+<p>
+<button type="button" class="btn btn-default btn-workflowr btn-workflowr-sessioninfo" data-toggle="collapse" data-target="#workflowr-sessioninfo" style="display: block;">
+<span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>
+Session information
+</button>
+</p>
+<div id="workflowr-sessioninfo" class="collapse">
+<div class="sourceCode" id="cb37"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code></pre></div>
+<pre><code>R version 4.4.1 (2024-06-14 ucrt)
+Platform: x86_64-w64-mingw32/x64
+Running under: Windows 11 x64 (build 26100)
+
+Matrix products: default
+
+
+locale:
+[1] LC_COLLATE=Portuguese_Brazil.utf8  LC_CTYPE=Portuguese_Brazil.utf8   
+[3] LC_MONETARY=Portuguese_Brazil.utf8 LC_NUMERIC=C                      
+[5] LC_TIME=Portuguese_Brazil.utf8    
+
+time zone: America/Sao_Paulo
+tzcode source: internal
+
+attached base packages:
+[1] parallel  stats     graphics  grDevices utils     datasets  methods  
+[8] base     
+
+other attached packages:
+ [1] ggthemes_5.1.0    ggrepel_0.9.6     doParallel_1.0.17 iterators_1.0.14 
+ [5] foreach_1.5.2     lubridate_1.9.4   forcats_1.0.0     stringr_1.5.1    
+ [9] dplyr_1.1.4       purrr_1.1.0       readr_2.1.5       tidyr_1.3.1      
+[13] tibble_3.3.0      ggplot2_3.5.2     tidyverse_2.0.0   sommer_4.4.2     
+[17] crayon_1.5.3      MASS_7.3-60.2     Matrix_1.7-0      GAPIT_3.5.0      
+
+loaded via a namespace (and not attached):
+ [1] gtable_0.3.6       xfun_0.52          bslib_0.9.0        lattice_0.22-7    
+ [5] tzdb_0.5.0         vctrs_0.6.5        tools_4.4.1        generics_0.1.4    
+ [9] pkgconfig_2.0.3    RColorBrewer_1.1-3 lifecycle_1.0.4    compiler_4.4.1    
+[13] farver_2.1.2       git2r_0.36.2       textshaping_1.0.1  codetools_0.2-20  
+[17] httpuv_1.6.16      htmltools_0.5.8.1  sass_0.4.10        yaml_2.3.10       
+[21] later_1.4.2        pillar_1.11.0      jquerylib_0.1.4    whisker_0.4.1     
+[25] cachem_1.1.0       tidyselect_1.2.1   digest_0.6.37      stringi_1.8.7     
+[29] labeling_0.4.3     cowplot_1.2.0      rprojroot_2.0.4    fastmap_1.2.0     
+[33] grid_4.4.1         cli_3.6.5          magrittr_2.0.3     utf8_1.2.6        
+[37] withr_3.0.2        scales_1.4.0       promises_1.3.3     timechange_0.3.0  
+[41] rmarkdown_2.29     workflowr_1.7.1    ragg_1.4.0         hms_1.1.3         
+[45] evaluate_1.0.4     knitr_1.50         rlang_1.1.6        Rcpp_1.1.0        
+[49] glue_1.8.0         rstudioapi_0.17.1  jsonlite_2.0.0     R6_2.6.1          
+[53] systemfonts_1.2.3  fs_1.6.6          </code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="footnotes footnotes-end-of-document">
+<hr />
+<ol>
+<li id="fn1"><p>Weverton Gomes da Costa, Pós-Doutorando, Departamento de
+Estatística - Universidade Federal de Viçosa, <a
+href="mailto:wevertonufv@gmail.com"
+class="email">wevertonufv@gmail.com</a><a href="#fnref1"
+class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>
+
+
+<!-- Adjust MathJax settings so that all math formulae are shown using
+TeX fonts only; see
+https://docs.mathjax.org/en/latest/web/configuration.html. This will make
+the presentation more consistent at the cost of the webpage sometimes
+taking slightly longer to load. Note that this only works because the
+footer is added to webpages before the MathJax javascript. -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": { availableFonts: ["TeX"] }
+  });
+</script>
+
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

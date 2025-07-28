@@ -47,7 +47,7 @@ pos_geno <- readRDS(file = "data/dados_reais/pos_geno_real.rds")
 head(pos_geno)
 ```
 
-## 2. Preparação dos dados Fenótipicos e Genótipicos
+## 2. Preparação dos dados
 
 Precisamos garantir que os dados fenotípicos e genotípicos estejam no formato correto para a análise. Isso inclui a conversão de colunas para tipos numéricos e a criação de identificadores únicos.
 
@@ -93,7 +93,7 @@ models <- c("GLM", "MLM", "CMLM", "MLMM", "SUPER", "FarmCPU", "Blink")
 
 Para realizar a análise de desequilíbrio de ligação (LD) entre os marcadores, precisamos preparar os dados genotípicos e o mapa de marcadores.
 
-### 3.1 Preparar os dados de genótipo e mapa
+### 3.1 Dados de genótipo e mapa
 
 Converta os dados de genótipo para o formato de matriz e prepare o mapa de marcadores, garantindo que as colunas estejam no tipo correto.
 
@@ -113,7 +113,7 @@ mapCP <- GM %>%
 head(mapCP)
 ```
 
-### 3.2 Run LD decay analysis for each linkage group
+### 3.2 Run LD decay analysis
 
 Obtenha os grupos de ligação únicos e aplique uma função para calcular o decaimento do LD para cada grupo de ligação. A função `LD.decay` do pacote `sommer` é utilizada para calcular o decaimento do LD.
 
@@ -282,7 +282,7 @@ Os modelos GLM (General Linear Model), MLM (Mixed Linear Model), CMLM (Compresse
 models <- c("GLM", "MLM", "CMLM", "MLMM", "SUPER", "FarmCPU", "Blink")
 ```
 
-### Loop para executar GAPIT em paralelo
+### 4.1 Loop para executar GAPIT em paralelo
 
 Para executar a análise de GWAS em paralelo, utilizamos o pacote `doParallel` para configurar um cluster que permite a execução simultânea de múltiplas análises. Isso acelera significativamente o processo, especialmente quando lidamos com grandes conjuntos de dados e múltiplos modelos.
 
@@ -373,7 +373,7 @@ saveRDS(results_cv_GAPIT, file = "output/gwas_results.rds")
 results_cv_GAPIT <- readRDS("output/gwas_results.rds")
 ```
 
-## 5. Importância de Marcadores via Modelos de ML
+## 5. Importância de Marcadores
 
 Para calcular a importância dos marcadores SNP nos modelos de machine learning, utilizamos os resultados de validação cruzada (CV) de cada modelo obtidos pelo script de [GWS](https://wevertongomescosta.github.io/Machine-learning-e-redes-neurais-artificiais-no-melhoramento-genetico-do-cafeeiro/gws_dados_reais.html) no passo anterior.
 
@@ -435,7 +435,7 @@ saveRDS(imp_ML_mean, file = "output/importance_ML_mean.rds")
 imp_ML_mean <- readRDS("output/importance_ML_mean.rds")
 ```
 
-## 6. Combinação de GWAS e Importância
+## 6. Combinar GWAS e ML
 
 Para combinar os resultados de GWAS com a importância dos marcadores obtida pelos modelos de machine learning, unimos os dois conjuntos de dados. Isso nos permitirá analisar quais SNPs são significativos em termos estatísticos e também quais têm maior importância preditiva nos modelos de machine learning.
 
@@ -453,7 +453,7 @@ saveRDS(results_combined, file = "output/gwas_combined_results.rds")
 results_combined <- readRDS("output/gwas_combined_results.rds")
 ```
 
-## 7. Pós-processamento e Exemplo de Plot
+## 7. Pós-processamento
 
 Os resultados combinados de efeitos dos marcadores devem ser processados para facilitar a visualização e interpretação. Isso inclui a extração de informações adicionais, como o cromossomo e a posição dos SNPs, e a normalização dos efeitos para cada trait e modelo.
 
@@ -488,7 +488,7 @@ plot_data <- normalized_imp %>%
 )
 ```
 
-### 7.3 Definindo os marcadores signifciativos
+### 7.3 Marcadores signifciativos
 
 Para cada modelo e trait, definimos um limiar de significância para identificar quais SNPs são considerados significativos. Utilizamos o método de correção de Bonferroni para ajustar os valores p, garantindo que os resultados sejam robustos e confiáveis. Adotamos um limiar de 0.05 e 0.01 para identificar SNPs significativos, permitindo uma análise mais rigorosa dos resultados.
 
@@ -534,7 +534,7 @@ results_cv_imp_ml_sig_01 <- plot_data %>%
 
 O Manhattan plot é uma ferramenta visual poderosa para identificar SNPs significativos em estudos de GWAS. Ele exibe os valores -log10(P.value) dos SNPs ao longo dos cromossomos, permitindo a identificação rápida de regiões com associações genéticas significativas. Neste script, geramos Manhattan plots para cada trait, destacando os SNPs que superam os limiares de significância definidos.
 
-```{r manhatan-plot, message=FALSE, warning=FALSE, out.width='100%', height = 20}
+```{r manhatan-plot, message=FALSE, warning=FALSE, out.width='100%'}
 for (i in traits) {
   # Prepara dados básicos e índice
   plotgwasall <- plot_data %>%
