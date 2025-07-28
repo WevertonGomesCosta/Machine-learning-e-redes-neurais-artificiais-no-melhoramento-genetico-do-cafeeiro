@@ -5,10 +5,6 @@ navbar:
   left:
   - text: Home
     href: index.html
-  - text: About
-    href: about.html
-  - text: License
-    href: license.html
   - text: Dados Reais
     menu:
     - text: GWS - Dados Reais
@@ -21,6 +17,10 @@ navbar:
       href: gws_dados_simulados.html
     - text: GWAS - Dados Simulados
       href: gwas_dados_simulados.html
+  - text: About
+    href: about.html
+  - text: License
+    href: license.html
   right:
   - icon: fa-github
     text: Source code
