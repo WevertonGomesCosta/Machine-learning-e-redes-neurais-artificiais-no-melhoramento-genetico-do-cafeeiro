@@ -1,5 +1,5 @@
 ---
-title: "Dados Simulados"
+title: "GWAS - Dados Simulados"
 author: 
   - Costa, W. G.^[Weverton Gomes da Costa, Pós-Doutorando, Departamento de Estatística - Universidade Federal de Viçosa, wevertonufv@gmail.com]
 date: "`r Sys.Date()`"
@@ -7,7 +7,7 @@ site: workflowr::wflow_site
 url: https://wevertongomescosta.github.io/Machine-learning-e-redes-neurais-artificiais-no-melhoramento-genetico-do-cafeeiro//
 output:
   workflowr::wflow_html:
-    toc: FALSE
+    toc: TRUE
   highlight: github
 editor_options:
   chunk_output_type: console

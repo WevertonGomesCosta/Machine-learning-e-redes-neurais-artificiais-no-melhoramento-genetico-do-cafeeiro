@@ -1,5 +1,5 @@
 ---
-title: "GWAS"
+title: "GWAS - Dados Reais"
 author: 
   - Costa, W. G.^[Weverton Gomes da Costa, Pós-Doutorando, Departamento de Estatística - Universidade Federal de Viçosa, wevertonufv@gmail.com]
 date: "`r Sys.Date()`"
@@ -7,39 +7,70 @@ site: workflowr::wflow_site
 url: https://wevertongomescosta.github.io/Machine-learning-e-redes-neurais-artificiais-no-melhoramento-genetico-do-cafeeiro//
 output:
   workflowr::wflow_html:
-    toc: FALSE
+    toc: TRUE
+    toc.float: TRUE
   highlight: github
 editor_options:
   chunk_output_type: console
 github-repo: wevertongomescosta/Machine-learning-e-redes-neurais-artificiais-no-melhoramento-genetico-do-cafeeiro
 ---
 
-## GWAS - GAPIT
-
-```{r packages}
-library(tidyverse) # Para manipulação de dados
-library(GAPIT) # Para GWAS
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 ```
 
+# Análise de Associação Genômica Ampla (GWAS) - Dados Reais (Coffea arabica)
 
-```{r GWAS-GLM}
+Este script realiza uma análise de associação genômica ampla (GWAS) utilizando o pacote GAPIT em R. Ele carrega dados fenotípicos e genotípicos reais, prepara os dados para análise e executa modelos de GWAS para cada combinação de traço e modelo especificado. Os resultados são salvos em um arquivo RDS.
+
+```{r packages, message=FALSE, warning=FALSE}
+library(GAPIT) # Para análise de associação genômica ampla (GWAS)
+library(sommer) # Para modelos mistos e análise de variância
+library(tidyverse) # Para manipulação de dados
+library(doParallel) # Para paralelização
+library(foreach) # Para loops paralelos
+library(ggrepel) # Para rótulos de texto em gráficos
+library(ggthemes) # Para temas de gráficos
+```
+
+## 1. Carregamento de Dados
+
+Os dados fenotípicos e genotípicos são carregados a partir de arquivos RDS. Certifique-se de que os arquivos estão no diretório correto.
+
+```{r load-data}
+# Carrega os dados de genótipos e fenótipos
+pheno <- readRDS(file = "data/dados_reais/pheno_real.rds")
+head(pheno)
+geno <- readRDS(file = "data/dados_reais/geno_real.rds")
+geno[1:5,1:5]
+pos_geno <- readRDS(file = "data/dados_reais/pos_geno_real.rds")
+head(pos_geno)
+```
+
+## 2. Preparação dos dados Fenótipicos e Genótipicos
+
+Precisamos garantir que os dados fenotípicos e genotípicos estejam no formato correto para a análise. Isso inclui a conversão de colunas para tipos numéricos e a criação de identificadores únicos.
+
+```{r prepare-data}
 # 1) Certifique‑se de que o seu data.frame de fenótipos
 #    tem a coluna 'genotipo' e depois só colunas numéricas:
 pheno <- pheno %>%
   # transforma tudo, exceto 'genotipo', em numeric
   mutate(across(-genotipo, ~ as.numeric(as.character(.))))
 
-# 2) Mesma ideia para geno (você já fez isso)
+# 2) Mesma ideia para geno
 geno <- geno %>%
   mutate(across(where(is.numeric), as.integer))
 
+# 3) Cria GD com ID e seleciona as colunas de genótipo
 GD <- geno %>%
   # 1) Cria a coluna ID
   mutate(ID = rownames(geno)) %>%
   # 2) Seleciona apenas ID + todas as colunas cujo nome contém "chr"
   select(ID, matches("chr"))
+GD[1:5,1:5]
 
-# 4) Prepare o GM igualzinho
+# 4) Prepare o GM 
 GM <- pos_geno %>%
   mutate(
     SNP = pos,
@@ -50,27 +81,549 @@ GM <- pos_geno %>%
   distinct() %>%
   filter(SNP %in% names(GD)) %>%
   arrange(SNP)
+head(GM)
+```
 
-# 5) Loop de GWAS — agora todas as Y serão numéricas
-traits <- 2:(ncol(pheno)-1)
+```{r include = FALSE}
+traits <- names(pheno)[2:(ncol(pheno) - 1)]
+models <- c("GLM", "MLM", "CMLM", "MLMM", "SUPER", "FarmCPU", "Blink")
+```
 
-for (j in traits) {
-  trait_name <- names(pheno)[j]
+## 3. Desequilibrio de Ligação
 
-  # Seleciona e converte a trait para numérico
+Para realizar a análise de desequilíbrio de ligação (LD) entre os marcadores, precisamos preparar os dados genotípicos e o mapa de marcadores.
+
+### 3.1 Preparar os dados de genótipo e mapa
+
+Converta os dados de genótipo para o formato de matriz e prepare o mapa de marcadores, garantindo que as colunas estejam no tipo correto.
+
+```{r prepare-ld-data}
+# Convert genotype data to matrix format
+# Remove the first column (ID) and convert to matrix
+CPgeno <- as.matrix(GD[-1])
+CPgeno[1:5,1:5]
+
+# Load and prepare map data
+mapCP <- GM %>%
+  mutate(Locus = SNP,  # Ensure SNP column is character type
+         Position = as.numeric(pos),  # Ensure pos column is numeric type
+         LG = as.integer(chr) + 1) %>%  # Ensure chr column is integer type
+  select(Locus, Position, LG) %>% 
+  filter(Locus %in% colnames(CPgeno))  # Filter to include only markers present in CPgeno
+head(mapCP)
+```
+
+### 3.2 Run LD decay analysis for each linkage group
+
+Obtenha os grupos de ligação únicos e aplique uma função para calcular o decaimento do LD para cada grupo de ligação. A função `LD.decay` do pacote `sommer` é utilizada para calcular o decaimento do LD.
+
+```{r unique-LGs}
+unique_LGs <- sort(unique(mapCP$LG))
+unique_LGs
+```
+
+O objeto `res` contém os resultados do decaimento do LD para cada grupo de ligação, filtrados por pares de marcadores significativos após correção de Bonferroni.
+
+```{r run-LD, eval = FALSE}
+res <- lapply(unique_LGs, function(lg) {
+  
+  # Step 2a: For the current linkage group 'lg', extract the corresponding marker names
+  markers <- mapCP %>%
+    filter(LG == lg) %>%  # Filter the map data to include only rows where LG equals the current linkage group
+    pull(Locus)           # Extract the 'Locus' column, which contains marker names
+  
+  # Step 2b: Perform Linkage Disequilibrium (LD) decay analysis on the genotype data for these markers
+  LDDecay <- LD.decay(CPgeno[, markers], # Subset the genotype matrix to include only the columns for the current markers
+                      mapCP %>% filter(LG == lg))  # Subset the map data to include only the current linkage group
+  
+  # Step 2c: Filter the LD results to include only significant marker pairs after Bonferroni correction
+  A <- LDDecay$all.LG %>%  # Access the LD results for all marker pairs
+    filter(p < 0.05 / choose(length(markers), 2))  # Apply Bonferroni correction to adjust the p-value threshold
+  
+  # Step 2d: Check if there are any significant marker pairs
+  if (nrow(A) > 0) {
+    # If significant pairs exist, create a data frame including the linkage group identifier
+    data.frame(GL = paste0("lg", lg), # Add a column 'GL' with the linkage group name (e.g., 'lg1', 'lg2', etc.)
+               A)                       # Include the filtered LD decay results
+  } else {
+    # If no significant pairs are found, return NULL for this linkage group
+    NULL
+  }
+})
+
+# Save res
+
+saveRDS(res, "output/res.RDS")
+```
+
+```{r include = FALSE}
+res <- readRDS("output/res.RDS")
+```
+
+O objeto `dados` será o conjunto de dados final contendo os resultados do decaimento do LD, com as colunas `d` (distância entre os marcadores em par de bases) e `r2` (coeficiente de determinação). A coluna `GL` indica o grupo de ligação ao qual os marcadores pertencem.
+
+```{r combine-ld-data}
+res <- res[!sapply(res, is.null)]
+dados <- do.call(rbind, res)
+dados$GL <- as.factor(dados$GL)
+head(dados)
+```
+
+Ajuste o modelo de perda de LD usando uma regressão local (loess) para prever o decaimento do LD em função da distância entre os marcadores.
+
+```{r fit-loss-model, eval = FALSE}
+mod <- loess(r2 ~ d, data = teste)
+saveRDS(mod, file = "output/mod.RDS")
+```
+
+```{r include = FALSE}
+mod <- readRDS("output/mod.RDS")
+```
+
+Prepare uma sequência de distâncias para prever o decaimento do LD usando o modelo ajustado. A sequência é criada com base nos valores mínimos e máximos de distância (`d`) encontrados nos dados.
+
+```{r sequence}
+# Usa grid reduzido para evitar alocação grande
+n_points <- 1000
+
+d_min <- min(dados$d)
+d_max <- max(dados$d)
+d_seq <- seq(d_min, d_max, length.out = n_points)[-1]
+```
+
+Preveja o decaimento do LD usando o modelo ajustado e salve os resultados em um arquivo RDS. O objeto `data_pred` conterá as distâncias e as previsões correspondentes.
+
+```{r Predict-r2, eval=FALSE}
+pred <- predict(mod, d_seq)
+data_pred <- data.frame(d = d_seq, pred = pred)
+head(data_pred)
+saveRDS(data_pred, file = "output/pred_mod.RDS")
+```
+
+```{r include = FALSE}
+data_pred <- readRDS("output/pred_mod.RDS")
+```
+
+Encontre a distância mais próxima do valor alvo de r² (0.8) e armazena essa distância em `closest_d`. A função `which.min` é utilizada para encontrar o índice da distância mais próxima.
+
+```{r find-distance}
+target_r2 <- 0.8
+closest_index <- which.min(abs(data_pred$pred - target_r2))
+closest_d <- d_seq[closest_index]
+closest_d
+```
+
+### 3.3 Plote o decaimento do LD
+
+Utilize o `ggplot2` para criar um gráfico do decaimento do LD, incluindo os pontos de dados originais, a linha de ajuste do modelo loess e as linhas verticais e horizontais para destacar o valor alvo de r² e a distância correspondente.
+
+```{r plot-ld, message=FALSE, warning=FALSE, out.width='100%'}
+# Create the plot with additional adjustments
+color_palette <- colorRampPalette(c('black', 'gray50'))
+
+# Plot the data with the fitted loess model and target r² line
+p <- ggplot(dados, aes(x = d, y = r2, colour = GL)) +
+  geom_point(pch = 21, show.legend = FALSE) +
+  geom_line(
+    data = data_pred,
+    aes(x = d, y = pred),
+    colour = 'red',
+    linewidth = 1
+  ) +
+  geom_hline(yintercept = target_r2,
+             linetype = "dashed",
+             color = "blue") +
+  geom_vline(xintercept = closest_d,
+             linetype = "dashed",
+             color = "green") +
+  geom_point(
+    aes(x = closest_d, y = target_r2),
+    data = NULL,
+    color = "gold",
+    size = 3
+  ) +
+  scale_color_manual(values = color_palette(length(unique(dados$GL)))) +
+  scale_y_continuous(breaks = seq(0, 1, by = 0.1)) +
+  labs(x = "Distance em par de bases (d)", y = expression(r^2)) +
+  theme_classic() +
+  theme(text = element_text(size = 15))
+
+# Add text annotation for the closest distance and target r²
+p <- p +
+  geom_text(
+    aes(
+      x = 2.5e7,
+      y = target_r2,
+      label = paste("d =", round(closest_d, 0), "p")
+    ),
+    data = NULL,
+    nudge_y = 0.02,
+    color = "black",
+    fontface = "bold"
+  )
+
+print(p)
+```
+
+```{r plot-ld-save, include = FALSE, eval = FALSE}
+ggsave(filename = "output/real_lddecay.tiff", plot = p, width = 12, height = 8, dpi = 600)
+```
+
+Definimos um limiar de LD de 0.8 e obtivemos que a distância de decaimento é aproximadamente **`r round(closest_d,2)`**, em par de bases.
+
+## 4. Preparação para GWAS (GAPIT)
+
+Os modelos GAPIT a serem avaliados são definidos, e os dados fenotípicos e genotípicos são preparados para a análise de associação genômica ampla (GWAS).
+
+Os modelos GLM (General Linear Model), MLM (Mixed Linear Model), CMLM (Compressed Mixed Linear Model), MLMM (Multi-Locus Mixed Model), SUPER (SNP Unbiased Epistatic Regression), FarmCPU (Fixed and Random Model Circulating Probability Unification) e Blink (Bayesian Linear Regression) são utilizados para realizar a análise de associação genômica. O GAPIT é um pacote amplamente utilizado em estudos de GWAS, pois permite a análise eficiente de grandes conjuntos de dados genômicos e fenotípicos.
+
+```{r prepare-data-gwas}
+# Definir modelos do GAPIT a serem avaliados
+models <- c("GLM", "MLM", "CMLM", "MLMM", "SUPER", "FarmCPU", "Blink")
+```
+
+### Loop para executar GAPIT em paralelo
+
+Para executar a análise de GWAS em paralelo, utilizamos o pacote `doParallel` para configurar um cluster que permite a execução simultânea de múltiplas análises. Isso acelera significativamente o processo, especialmente quando lidamos com grandes conjuntos de dados e múltiplos modelos.
+
+O objeto `results_cv_GAPIT` armazenará os resultados de todas as análises de GWAS, organizados por trait e modelo. Cada iteração do loop executa o GAPIT para uma combinação específica de trait e modelo, prepara os dados fenotípicos e genotípicos, e extrai os resultados da análise.
+
+```{r gwas-loop, eval = FALSE}
+# Configuração do cluster para paralelização (usa todos os núcleos menos um)
+numCores <- max(1, parallel::detectCores() - 1)
+cl <- makeCluster(numCores)
+registerDoParallel(cl)
+
+# Criar combinações de traits e modelos
+combos <- expand.grid(trait = traits,
+                      model = models,
+                      stringsAsFactors = FALSE) %>% as_tibble()
+
+# Loop paralelo: executar GAPIT para cada combinação
+results_cv_GAPIT <- foreach(
+  idx = seq_len(nrow(combos)),
+  .packages = c("GAPIT", "dplyr", "tibble"),
+  .combine = bind_rows
+) %dopar% {
+  # Identificar trait e modelo
+  trait_name  <- combos$trait[idx]
+  model_name <- combos$model[idx]
+  
+  # Preparar Y: converte fenótipo para numérico
   Y <- pheno %>%
     select(genotipo, all_of(trait_name)) %>%
     rename(ID = genotipo) %>%
-    mutate(across(-ID, ~ as.numeric(as.character(.)))) %>% 
+    mutate(across(-ID, ~ as.numeric(as.character(.)))) %>%
     as.data.frame()
-
-  # Executa o modelo
-  modelo <- GAPIT(
-    Y = Y,
-    GD = GD,
-    GM = GM,
-    model = "GLM",
-    file.output = TRUE
+  
+  # Executar modelo GAPIT sem gerar arquivos de saída
+  fit <- GAPIT(
+    Y           = Y,
+    GD          = GD,
+    GM          = GM,
+    model       = model_name,
+    file.output = FALSE
   )
+  
+  # Extrair resultados GWAS e padronizar tipos
+  gwas <- as_tibble(fit$GWAS) %>%
+    mutate(across(.cols = -SNP, .fns = ~ if (is.character(.x)) {
+      suppressWarnings(as.numeric(.x))
+    } else {
+      .x
+    }))
+  
+  # Ajustar nomes de colunas conforme modelo
+  if (model_name %in% c("MLMM", "FarmCPU")) {
+    colnames(gwas) <- c("SNP",
+                        "Chromosome",
+                        "Position ",
+                        "P.value",
+                        "maf",
+                        "nobs",
+                        "effect")
+  }
+  
+  if (model_name %in% c("Blink")) {
+    colnames(gwas) <- c("SNP",
+                        "Chromosome",
+                        "Position ",
+                        "P.value",
+                        "nobs",
+                        "effect",
+                        "maf")
+  }
+  
+  # Adicionar metadados de trait e modelo
+  gwas %>%
+    mutate(trait = trait_name, model = model_name) %>%
+    select(trait, model, everything())
+}
+
+
+# Encerrar o cluster
+stopCluster(cl)
+
+# Salvar resultados
+saveRDS(results_cv_GAPIT, file = "output/gwas_results.rds")
+```
+
+```{r include = FALSE}
+# Carregar resultados de GWAS
+results_cv_GAPIT <- readRDS("output/gwas_results.rds")
+```
+
+## 5. Importância de Marcadores via Modelos de ML
+
+Para calcular a importância dos marcadores SNP nos modelos de machine learning, utilizamos os resultados de validação cruzada (CV) de cada modelo obtidos pelo script de [GWS](https://wevertongomescosta.github.io/Machine-learning-e-redes-neurais-artificiais-no-melhoramento-genetico-do-cafeeiro/gws_dados_reais.html) no passo anterior.
+
+A função `flatten_importance` é responsável por ler os arquivos de resultados, extrair as importâncias e adicionar metadados relevantes como Trait, Rep, Fold e model.
+
+```{r flatten_importance, eval=FALSE}
+flatten_importance <- function(path, model_name) {
+  readRDS(path) %>%
+    # injeta nos próprios dfs de imp: Trait, Rep, Fold e model
+    mutate(
+      imp = pmap(
+        list(imp, Trait, Rep, Fold),
+        ~ .x %>%
+           mutate(
+             Trait  = ..2,
+             Rep    = ..3,
+             Fold   = ..4,
+             model  = model_name
+           )
+      )
+    ) %>%
+    # mantém só a lista imp (já com metadados) e desaninha tudo
+    select(imp) %>%
+    unnest(cols = imp)
+}
+
+# Vetores de arquivos e nomes
+models <- c("MARS_1", "MARS_2", "MARS_3", "DT", "Bag", "RF", "GBM")
+paths  <- paste0("output/real_results_cv_", models, ".rds")
+
+# Combina todas as tabelas num único data.frame
+imp_ML <- map2_dfr(paths, models, flatten_importance)
+# Salvar resultados de importância
+saveRDS(imp_ML, file = "output/importance_ML.rds")
+```
+
+```{r include=FALSE}
+imp_ML <- readRDS("output/importance_ML.rds")
+```
+
+Como a importância dos SNPs foi calculada para cada repetição e fold, precisamos calcular a média dos efeitos dos SNPs por trait e modelo. Isso nos permitirá identificar quais SNPs são mais relevantes em geral, independentemente do modelo específico utilizado.
+
+```{r imp-ml-mean, eval=FALSE}
+# Média dos efeitos dos SNPs por trait e modelo
+imp_ML_mean <- imp_ML %>%
+  rename(effect = Overall) %>%
+  group_by(marker, Trait, model) %>%
+  summarise(effect = mean(effect, na.rm = TRUE), .groups = "drop") %>%
+  arrange(Trait, model, desc(effect))
+
+# Renomear colunas para manter consistência
+colnames(imp_ML_mean) <- c("SNP", "trait", "model", "effect")
+
+# Salvar resultados de importância média
+saveRDS(imp_ML_mean, file = "output/importance_ML_mean.rds")
+```
+
+```{r include=FALSE}
+imp_ML_mean <- readRDS("output/importance_ML_mean.rds")
+```
+
+## 6. Combinação de GWAS e Importância
+
+Para combinar os resultados de GWAS com a importância dos marcadores obtida pelos modelos de machine learning, unimos os dois conjuntos de dados. Isso nos permitirá analisar quais SNPs são significativos em termos estatísticos e também quais têm maior importância preditiva nos modelos de machine learning.
+
+```{r combine-results-gwas, eval = FALSE}
+# Unir resultados de GWAS com importância dos modelos de ML
+results_combined <- results_cv_GAPIT %>%
+  full_join(imp_ML_mean) %>%
+  select(trait, model, SNP, P.value, effect)
+
+# Salvar resultados combinados
+saveRDS(results_combined, file = "output/gwas_combined_results.rds")
+```
+
+```{r include=FALSE}
+results_combined <- readRDS("output/gwas_combined_results.rds")
+```
+
+## 7. Pós-processamento e Exemplo de Plot
+
+Os resultados combinados de efeitos dos marcadores devem ser processados para facilitar a visualização e interpretação. Isso inclui a extração de informações adicionais, como o cromossomo e a posição dos SNPs, e a normalização dos efeitos para cada trait e modelo.
+
+```{r visualize-results}
+results_combined <- results_combined %>% 
+  mutate(Chr = str_split_i(SNP, ":", 1),
+         Chr = str_split_i(Chr, "chr",2),
+         Pos = str_split_i(SNP, ":", 2)
+         )
+```
+
+### 7.1 Normalizando a importância
+
+Para facilitar a comparação entre os efeitos dos marcadores, normalizamos os valores de efeito para uma escala de 0 a 10. Isso ajuda a visualizar a importância relativa dos SNPs em diferentes traços e modelos.
+
+```{r normalized-imp}
+normalized_imp <- results_combined %>%
+  group_by(model, trait) %>%
+  mutate(effect_res = scales::rescale(effect, to = c(0, 10), finite = F)) %>%
+  ungroup()
+```
+
+### 7.2 Organizando dados para plot
+
+Para associar os marcadores SNP às regiões do QTL, precisamos criar um índice contínuo para cada SNP, que será utilizado para plotar os resultados de forma ordenada. Isso nos permitirá visualizar a distribuição dos SNPs ao longo dos cromossomos e identificar as regiões de interesse.
+
+```{r qtl-regions}
+plot_data <- normalized_imp %>%
+  filter(SNP != "") %>% 
+  arrange(as.numeric(Chr), SNP) %>% 
+  mutate(index = row_number()                                # 3) Índice contínuo
+)
+```
+
+### 7.3 Definindo os marcadores signifciativos
+
+Para cada modelo e trait, definimos um limiar de significância para identificar quais SNPs são considerados significativos. Utilizamos o método de correção de Bonferroni para ajustar os valores p, garantindo que os resultados sejam robustos e confiáveis. Adotamos um limiar de 0.05 e 0.01 para identificar SNPs significativos, permitindo uma análise mais rigorosa dos resultados.
+
+Para os modelos GAPIT, utilizamos os valores de P.value, enquanto para os modelos de machine learning, utilizamos a importância dos efeitos dos SNPs. Os SNPs significativos são então armazenados em data frames separados para cada limiar de significância.
+
+```{r result-gwas}
+# Definindo o limiar de significância
+alpha <- 0.05
+n.markers <- length(unique(plot_data$SNP))
+threshold_05 <- alpha / n.markers
+
+alpha <- 0.01
+n.markers <- length(unique(plot_data$SNP))
+threshold_01 <- alpha / n.markers
+
+# Filtrando resultados significativos
+results_cv_GAPIT_sig_05 <- plot_data %>%
+  filter(model%in% models) %>%
+  filter(-log10(P.value) > -log10(threshold_01)) %>%
+  mutate(sig = paste(trait, SNP, sep = "_")) %>%
+  droplevels()
+
+results_cv_GAPIT_sig_01 <- plot_data %>%
+  filter(model %in% models) %>%
+  filter(-log10(P.value) > -log10(threshold_01)) %>%
+  mutate(sig = paste(trait, SNP, sep = "_")) %>%
+  droplevels()
+
+results_cv_imp_ml_sig_05 <- plot_data %>% 
+  filter(!(model %in% models)) %>%
+  filter(effect_res > -log10(threshold_05)) %>%
+  mutate(sig = paste(trait, SNP, sep = "_")) %>%
+  droplevels()
+
+results_cv_imp_ml_sig_01 <- plot_data %>%
+  filter(!(model %in% models)) %>%
+  filter(effect_res > -log10(threshold_01)) %>%
+  mutate(sig = paste(trait, SNP, sep = "_")) %>%
+  droplevels()
+```
+
+### 7.4 Manhattan plot
+
+O Manhattan plot é uma ferramenta visual poderosa para identificar SNPs significativos em estudos de GWAS. Ele exibe os valores -log10(P.value) dos SNPs ao longo dos cromossomos, permitindo a identificação rápida de regiões com associações genéticas significativas. Neste script, geramos Manhattan plots para cada trait, destacando os SNPs que superam os limiares de significância definidos.
+
+```{r manhatan-plot, message=FALSE, warning=FALSE, out.width='100%', height = 20}
+for (i in traits) {
+  # Prepara dados básicos e índice
+  plotgwasall <- plot_data %>%
+    filter(trait == i, !is.na(Chr)) %>%
+    arrange(as.numeric(Chr), SNP) %>%
+    mutate(
+      Chr   = factor(Chr, levels = as.character(0:11))
+    )
+  
+  # Cria um índice para alocar o Chr ao longo do eixo x
+  axisdf <- plotgwasall %>%
+    group_by(Chr) %>%
+    summarise(center = (min(index) + max(index)) / 2, .groups = "drop") %>%
+    arrange(as.integer(as.character(Chr)))
+
+  # Paleta gdocs de 12 cores
+  gdocs <- gdocs_pal()(24)[-12]
+  
+  # GWAS
+  figure_gwas <- plotgwasall %>%
+    filter(model %in% models) %>%
+    ggplot(aes(x = index, y = -log10(P.value), color = Chr)) +
+    geom_point(alpha = 0.5, size = 1) +
+    geom_hline(yintercept = -log10(threshold_05), linetype = "dashed", color = "red") +
+    geom_hline(yintercept = -log10(threshold_01), linetype = "dashed", color = "blue") +
+    scale_x_continuous(breaks = axisdf$center, labels = axisdf$Chr) +
+    scale_y_continuous(limits = c(0, 10*1.1), breaks = seq(0,10,2)) +
+    facet_wrap(model ~ ., ncol = 1, scales = "free_y", strip.position = "right") +
+    scale_color_manual(values = gdocs, drop = FALSE) +
+    theme_hc() + xlab("Linkage Group") + ylab(expression(-log[10](P.value))) +
+    theme(legend.position = "none", axis.ticks.x = element_blank(), panel.grid.major.x = element_blank())
+
+  # ML
+  figure_ML <- plotgwasall %>%
+    filter(!(model %in% models)) %>%
+    ggplot(aes(x = index, y = effect_res, color = Chr)) +
+    geom_point(alpha = 0.5, size = 1) +
+    geom_hline(yintercept = -log10(threshold_05), linetype = "dashed", color = "red") +
+    geom_hline(yintercept = -log10(threshold_01), linetype = "dashed", color = "blue") +
+    scale_x_continuous(breaks = axisdf$center, labels = axisdf$Chr) +
+    scale_y_continuous(limits = c(0, 10*1.1), breaks = seq(0,10,2)) +
+    facet_wrap(model ~ ., ncol = 1, scales = "free_y", strip.position = "right") +
+    scale_color_manual(values = gdocs, drop = FALSE) +
+    theme_hc() + xlab("Linkage Group") + ylab("Importance") +
+    theme(legend.position = "none", axis.ticks.x = element_blank(), panel.grid.major.x = element_blank())
+
+  # Anotações
+  figure_gwas <- figure_gwas +
+    geom_text_repel(data = results_cv_GAPIT_sig_05 %>% filter(trait == i),
+                    aes(x = index, y = -log10(P.value), label = SNP),
+                    size = 3, segment.color = "gray50", max.overlaps = 10) +
+    geom_text_repel(data = results_cv_GAPIT_sig_01 %>% filter(trait == i),
+                    aes(x = index, y = -log10(P.value), label = SNP),
+                    size = 3, segment.color = "gray50", max.overlaps = 10)
+
+  figure_ML <- figure_ML +
+    geom_text_repel(data = results_cv_imp_ml_sig_05 %>% filter(trait == i),
+                    aes(x = index, y = effect_res, label = SNP),
+                    size = 3, segment.color = "gray50", max.overlaps = 10) +
+    geom_text_repel(data = results_cv_imp_ml_sig_01 %>% filter(trait == i),
+                    aes(x = index, y = effect_res, label = SNP),
+                    size = 3, segment.color = "gray50", max.overlaps = 10)
+
+  # Combina e salva
+  p <- cowplot::plot_grid(figure_gwas, figure_ML, ncol = 2,
+                          labels = c("GWAS","ML"), label_size = 10)
+  
+  # Ajusta título e tema
+  p <- p + ggtitle(paste("Manhattan Plot for", i)) + theme(plot.title = element_text(hjust = 0.5, size = 15),
+                                                           text = element_text(size = 12))
+  
+  # Exibe o plot
+  print(p)
+  
+  # Salva o plot
+  ggsave(paste0("output/manhattan_", i, ".tiff"), p, width = 16, height = 12, dpi = 300)
 }
 ```
+
+```{r include = FALSE}
+snp <- results_cv_imp_ml_sig_01 %>% 
+  filter(model != "DT") %>% 
+  group_by(trait, SNP) %>%
+  summarise(n = n(), .groups = "drop") %>%
+  arrange(desc(n))
+```
+
+## 8. Resultados
+
+Finalizamos conlcuindo que para nenhum modelo de GWAS encontramos marcadores com efeito significativo, enquanto que para os métodos de ML encontramos marcadores que possam ser efeitos significativos das características avaliadas.
+
+Entre os marcadores identificados como mais recorrentes em nossos modelos, destacam‐se dois SNPs que apareceram em cinco ocasiões: o locus chr2:5400524, associado ao traço “Cer”, e o locus chr6:11869033, associado ao traço “Prod.Cor”. Esses resultados sugerem que essas posições genômicas são consistentemente relevantes para as variações desses fenótipos. Para o traço “BM”, observamos quatro marcadores com três repetições cada – chr0:163908002, chr2:5400524, chr6:2818374 e chr8:26493958 – indicando várias regiões de interesse que merecem investigação adicional. Ainda no traço “Cer”, além do SNP principal, dois outros loci (chr5:26339556 e chr7:11934703) também surgiram em três modelos. Para “Prod.Cor”, além de chr6:11869033, o SNP chr9:16308773 foi identificado três vezes.
