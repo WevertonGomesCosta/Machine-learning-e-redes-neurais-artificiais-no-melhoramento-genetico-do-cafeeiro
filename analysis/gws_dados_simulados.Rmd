@@ -8,35 +8,45 @@ url: https://wevertongomescosta.github.io/Machine-learning-e-redes-neurais-artif
 output:
   workflowr::wflow_html:
     toc: TRUE
+    toc_float: TRUE
   highlight: github
 editor_options:
   chunk_output_type: console
 github-repo: wevertongomescosta/Machine-learning-e-redes-neurais-artificiais-no-melhoramento-genetico-do-cafeeiro
 ---
 
-
-## Bibliotecas
-
-```{r setup, message=FALSE, warning=FALSE}
-library(cvTools)
-library(kableExtra)
-library(parallel)
-library(doParallel)
-library(foreach)
-library(sommer)
-library(earth)
-library(rpart)
-library(randomForest)
-library(gbm)
-library(neuralnet)
-library(ANN2)
-library(tidyverse)
-library(caret)
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
 
-## Carregamento dos Dados
+# Seleção Genõmica Ampla - Dados Simulados
 
-### Dados Fenotípicos
+Este documento apresenta a implementação de modelos de seleção genômica ampla (GWS) utilizando dados simulados. Os modelos avaliados incluem G-BLUP, MARS, Random Forest, Bagging, Boosting e Redes Neurais Artificiais. A validação cruzada é utilizada para avaliar a acurácia preditiva dos modelos.
+
+```{r packages, message=FALSE, warning=FALSE}
+library(cvTools) # Para validação cruzada
+library(kableExtra) # Para tabelas
+library(parallel) # Para paralelização
+library(doParallel) # Para paralelização
+library(foreach) # Para paralelização
+library(sommer) # Para modelos mistos
+library(earth) # Para MARS
+library(rpart) # Para árvores de decisão
+library(randomForest) # Para Random Forest
+library(gbm) # Para Boosting
+library(neuralnet) # Para Redes Neurais
+library(ANN2) # Para Redes Neurais
+library(caret) # Para importância de variaveis
+library(tidyverse) # Para manipulação de dados
+```
+
+## 1. Carregamento dos Dados
+
+Os dados utilizados neste estudo são simulados e consistem em informações fenotípicas e genotípicas de uma população F₂. Os fenótipos foram gerados com base em cenários de QTL (Quantitative Trait Loci) e herdabilidade, enquanto os genótipos foram simulados a partir de um mapa genético.
+
+### 1.1 Dados Fenotípicos
+
+Os dados fenotípicos são carregados a partir de um arquivo de texto, onde cada linha representa um indivíduo e suas características fenotípicas. O arquivo contém uma coluna de IDs e várias colunas correspondentes aos fenótipos medidos.
 
 ```{r load-pheno}
 pheno <- read.table("data/dados_simulados/DG#gen_F2_Vfen.txt", header = FALSE) %>%
@@ -44,15 +54,20 @@ pheno <- read.table("data/dados_simulados/DG#gen_F2_Vfen.txt", header = FALSE) %
   mutate(ID = as.factor(ID))
 ```
 
-### Dados Genotípicos
+### 1.2 Dados Genotípicos
+
+Os dados genotípicos são carregados a partir de um arquivo de texto, onde cada linha representa um indivíduo e suas informações genéticas. As colunas correspondem aos SNPs (Single Nucleotide Polymorphisms) presentes no mapa genético.
 
 ```{r load-geno}
 geno <- read.table("data/dados_simulados/genoma_mapa.txt", header = FALSE)
 colnames(geno) <- 1:ncol(geno)
 geno <- t(geno)
+geno <- geno - 1 
 ```
 
-## Preparação para Validação Cruzada
+## 2. Preparação para Validação Cruzada
+
+Para realizar a validação cruzada, os dados fenotípicos e genotípicos são organizados e alinhados. A validação cruzada será realizada com 5 dobras (folds) e 5 repetições, garantindo que cada indivíduo seja avaliado em diferentes conjuntos de treino e validação.
 
 ```{r params}
 nfolds <- 5
@@ -64,7 +79,6 @@ set.seed(123)
 pheno <- pheno[order(pheno$ID), ]
 geno  <- geno[order(rownames(geno)), ]
 stopifnot(all(rownames(geno) == as.character(pheno$ID)))
-geno <- geno - 1
 
 # Generating fold list
 fold.list <- vector("list", length = nrept)
@@ -80,25 +94,30 @@ for (r in seq_len(nrept)) {
 }
 ```
 
-## 1. G-BLUP
+## 3. Modelos para GWS
+
+## 3.1. G-BLUP
 
 O modelo G-BLUP (Genomic Best Linear Unbiased Prediction) é uma abordagem amplamente utilizada para predição genômica, que considera tanto os efeitos aditivos quanto os efeitos de dominância dos marcadores genéticos. Neste estudo, implementamos três variantes do G-BLUP: Aditivo, Aditivo-Dominante e Aditivo-Dominante-Epistástico.
 
 O modelo é implementado utilizando a função `mmes` do pacote `sommer`, que permite ajustar modelos mistos com estruturas de parentesco complexas. A validação cruzada é realizada para avaliar a acurácia preditiva do modelo.
 
-### 1.1 G-BLUP Aditivo
-
+### 3.1.1 G-BLUP Aditivo
 
 Para o modelo G-BLUP aditivo, utilizamos a matriz de parentesco aditivo (K) calculada a partir dos dados genotípicos. Este modelo assume que os efeitos dos marcadores são puramente aditivos, sem considerar interações de dominância ou epistasia.
 
 ```{r build-K}
+# Construção da matriz de parentesco aditivo
 K <- A.mat(geno)
 ```
 
+
 ```{r cv-gblup, message=FALSE, warning=FALSE, eval = FALSE}
+# Configuração do ambiente de paralelização
 cl <- makeCluster(max(1, detectCores() - 1))
 registerDoParallel(cl)
 
+# Criação de um grid de combinações de traits, repetições e folds
 combos <- expand.grid(
   trait = traits,
   rep = seq_len(nrept),
@@ -106,6 +125,7 @@ combos <- expand.grid(
   stringsAsFactors = FALSE
 )
 
+# Execução da validação cruzada para o modelo G-BLUP aditivo
 results_cv_GBLUP_a <- foreach(
   idx = seq_len(nrow(combos)),
   .packages = c("sommer", "dplyr", "tibble"),
@@ -156,24 +176,29 @@ results_cv_GBLUP_a <- foreach(
   )
 }
 
+# Finalização do cluster de paralelização
 stopCluster(cl)
 
+# Salvando os resultados da validação cruzada
 saveRDS(results_cv_GBLUP_a, file = "output/results_cv_GBLUP_a.rds")
 ```
 
-### 1.2 G-BLUP Aditivo-Dominante
+### 3.1.2 G-BLUP Aditivo-Dominante
 
 Para o modelo G-BLUP aditivo-dominante, utilizamos a matriz de parentesco aditivo-dominante (K) que considera tanto os efeitos aditivos quanto os de dominância dos marcadores genéticos. Este modelo é mais complexo e pode capturar interações entre alelos.
 
 ```{r build-K-ad}
+# Construção das matrizes de parentesco aditivo e dominante
 K <- A.mat(geno)
 D <- D.mat(geno)
 ```
 
 ```{r cv-gblup-ad, message=FALSE, warning=FALSE, eval = FALSE}
+# Configuração do ambiente de paralelização
 cl <- makeCluster(max(1, detectCores() - 1))
 registerDoParallel(cl)
 
+# Criação de um grid de combinações de traits, repetições e folds
 combos_ad <- expand.grid(
   trait = traits,
   rep = seq_len(nrept),
@@ -181,12 +206,12 @@ combos_ad <- expand.grid(
   stringsAsFactors = FALSE
 )
 
+# Execução da validação cruzada para o modelo G-BLUP aditivo-dominante
 results_cv_GBLUP_ad <- foreach(
   idx = seq_len(nrow(combos_ad)),
   .packages = c("sommer", "dplyr", "tibble"),
   .combine = bind_rows
 ) %dopar% {
-  idx=1
   # Extração dos parâmetros do grid
   tr <- combos_ad$trait[idx]
   r <- combos_ad$rep[idx]
@@ -244,16 +269,19 @@ results_cv_GBLUP_ad <- foreach(
   )
 }
 
+# Finalização do cluster de paralelização
 stopCluster(cl)
 
+# Salvando os resultados da validação cruzada
 saveRDS(results_cv_GBLUP_ad, file = "output/results_cv_GBLUP_ad.rds")
 ```
 
-### 1.3 G-BLUP Aditivo-Dominante-Epistástico
+### 3.1.3 G-BLUP Aditivo-Dominante-Epistástico
 
 Para o modelo G-BLUP aditivo-dominante-epistástico, utilizamos a matriz de parentesco que inclui efeitos epistáticos. Este modelo é o mais complexo e pode capturar interações entre múltiplos marcadores.
 
 ```{r build-K-ad-de}
+# Construção das matrizes de parentesco aditivo, dominante e epistático
 K <- A.mat(geno)
 D <- D.mat(geno)
 E <- E.mat(geno)
@@ -261,9 +289,11 @@ E <- E.mat(geno)
 
 
 ```{r cv-gblup-ade, message=FALSE, warning=FALSE, eval = FALSE}
+# Configuração do ambiente de paralelização
 cl <- makeCluster(max(1, detectCores() - 1))
 registerDoParallel(cl)
 
+# Criação de um grid de combinações de traits, repetições e folds
 combos_ade <- expand.grid(
   trait = traits,
   rep = seq_len(nrept),
@@ -271,6 +301,7 @@ combos_ade <- expand.grid(
   stringsAsFactors = FALSE
 )
 
+# Execução da validação cruzada para o modelo G-BLUP aditivo-dominante-epistástico
 results_cv_GBLUP_ade <- foreach(
   idx = seq_len(nrow(combos_ade)),
   .packages = c("sommer", "dplyr", "tibble"),
@@ -336,20 +367,27 @@ results_cv_GBLUP_ade <- foreach(
   )
 }
 
+# Finalização do cluster de paralelização
 stopCluster(cl)
 
+# Salvando os resultados da validação cruzada
 saveRDS(results_cv_GBLUP_ade, file = "output/results_cv_GBLUP_ade.rds")
 ```
 
+### 3.2. MARS
 
-## 2. MARS
+O modelo MARS (Multivariate Adaptive Regression Splines) é uma técnica de regressão não paramétrica que pode capturar relações complexas entre variáveis. Neste estudo, implementamos três variantes do MARS: uma com grau 1, outra com grau 2 e outra com grau 3, para avaliar a capacidade de modelagem de interações entre os marcadores genéticos. A validação cruzada é utilizada para avaliar a acurácia preditiva do modelo. 
 
-### 2.1 MARS 1
+#### 3.2.1 MARS 1
+
+O modelo MARS de grau 1 é utilizado para capturar relações lineares entre os marcadores genéticos e os fenótipos. 
 
 ```{r cv-mars1, message=FALSE, warning=FALSE, eval = FALSE}
+# Configuração do ambiente de paralelização
 cl <- makeCluster(max(1, detectCores() - 1))
 registerDoParallel(cl)
 
+# Criação de um grid de combinações de traits, repetições e folds
 combos_mars <- expand.grid(
   trait = traits,
   rep = seq_len(nrept),
@@ -357,26 +395,31 @@ combos_mars <- expand.grid(
   stringsAsFactors = FALSE
 )
 
+# Execução da validação cruzada para o modelo MARS de grau 1
 results_cv_MARS_1 <- foreach(
   idx = seq_len(nrow(combos_mars)),
   .packages = c("earth", "dplyr", "tibble"),
   .combine = bind_rows
 ) %dopar% {
-  
+  # Extração dos parâmetros do grid
   tr <- combos_mars$trait[idx]
   r <- combos_mars$rep[idx]
   f <- combos_mars$fold[idx]
   
+  # Seleção dos índices de validação cruzada
   valid_idx <- fold.list[[r]][[f]]
   train_idx <- setdiff(seq_len(nrow(pheno)), valid_idx)
   
+  # Seleção dos dados fenotípicos e genotípicos
   yT <- pheno[train_idx, tr]
   xT <- geno[train_idx, ]
   yV <- pheno[valid_idx, tr]
   xV <- geno[valid_idx, ]
   
+  # Ajuste do modelo MARS de grau 1
   fit <- earth(x = xT, y = yT, degree = 1)
   
+  # Predição para treino e validação
   pred_T <- predict(fit, xT)
   pred_V <- predict(fit, xV)
   
@@ -396,8 +439,10 @@ results_cv_MARS_1 <- foreach(
     select(Overall = rss, marker, Rep, Fold) %>%
     mutate(marker = stringr::str_replace_all(marker, "-unused", ""))
    
+  # Limpeza de memória
   gc() 
   
+  # Criação do dataframe de resultados
   tibble(
     Trait = tr,
     Degree = 1,
@@ -413,17 +458,23 @@ results_cv_MARS_1 <- foreach(
   )
 }
 
+# Finalização do cluster de paralelização
 stopCluster(cl)
 
+# Salvando os resultados da validação cruzada
 saveRDS(results_cv_MARS_1, file = "output/results_cv_MARS_1.rds")
 ```
 
-### 2.2 MARS 2
+#### 3.2.2 MARS 2
+
+O modelo MARS de grau 2 é utilizado para capturar relações quadráticas entre os marcadores genéticos e os fenótipos. Este modelo pode capturar interações mais complexas entre os marcadores. 
 
 ```{r cv-mars2, message=FALSE, warning=FALSE, eval = FALSE}
+# Configuração do ambiente de paralelização
 cl <- makeCluster(max(1, detectCores() - 1))
 registerDoParallel(cl)
 
+# Criação de um grid de combinações de traits, repetições e folds
 combos_mars <- expand.grid(
   trait = traits,
   rep = seq_len(nrept),
@@ -431,26 +482,31 @@ combos_mars <- expand.grid(
   stringsAsFactors = FALSE
 )
 
+# Execução da validação cruzada para o modelo MARS de grau 2
 results_cv_MARS_2 <- foreach(
   idx = seq_len(nrow(combos_mars)),
   .packages = c("earth", "dplyr", "tibble"),
   .combine = bind_rows
 ) %dopar% {
-  
+  # Extração dos parâmetros do grid
   tr <- combos_mars$trait[idx]
   r <- combos_mars$rep[idx]
   f <- combos_mars$fold[idx]
   
+  # Seleção dos índices de validação cruzada
   valid_idx <- fold.list[[r]][[f]]
   train_idx <- setdiff(seq_len(nrow(pheno)), valid_idx)
   
+  # Seleção dos dados fenotípicos e genotípicos
   yT <- pheno[train_idx, tr]
   xT <- geno[train_idx, ]
   yV <- pheno[valid_idx, tr]
   xV <- geno[valid_idx, ]
   
+  # Ajuste do modelo MARS de grau 2
   fit <- earth(x = xT, y = yT, degree = 2)
   
+  # Predição para treino e validação
   pred_T <- predict(fit, xT)
   pred_V <- predict(fit, xV)
   
@@ -470,8 +526,10 @@ results_cv_MARS_2 <- foreach(
     select(Overall = rss, marker, Rep, Fold) %>%
     mutate(marker = stringr::str_replace_all(marker, "-unused", ""))
   
+  # Limpeza de memória
   gc()  
   
+  # Criação do dataframe de resultados
   tibble(
     Trait = tr,
     Degree = 2,
@@ -487,17 +545,23 @@ results_cv_MARS_2 <- foreach(
   )
 }
 
+# Finalização do cluster de paralelização
 stopCluster(cl)
 
+# Salvando os resultados da validação cruzada
 saveRDS(results_cv_MARS_2, file = "output/results_cv_MARS_2.rds")
 ```
 
-### 2.3 MARS 3
+#### 3.2.3 MARS 3
+
+O modelo MARS de grau 3 é utilizado para capturar relações cúbicas entre os marcadores genéticos e os fenótipos. Este modelo é o mais complexo e pode capturar interações ainda mais complexas entre os marcadores. 
 
 ```{r cv-mars3, message=FALSE, warning=FALSE, eval = FALSE}
+# Configuração do ambiente de paralelização
 cl <- makeCluster(max(1, detectCores() - 1))
 registerDoParallel(cl)
 
+# Criação de um grid de combinações de traits, repetições e folds
 combos_mars <- expand.grid(
   trait = traits,
   rep = seq_len(nrept),
@@ -505,26 +569,31 @@ combos_mars <- expand.grid(
   stringsAsFactors = FALSE
 )
 
+# Execução da validação cruzada para o modelo MARS de grau 3
 results_cv_MARS_3 <- foreach(
   idx = seq_len(nrow(combos_mars)),
   .packages = c("earth", "dplyr", "tibble"),
   .combine = bind_rows
 ) %dopar% {
-  
+  # Extração dos parâmetros do grid
   tr <- combos_mars$trait[idx]
   r <- combos_mars$rep[idx]
   f <- combos_mars$fold[idx]
   
+  # Seleção dos índices de validação cruzada
   valid_idx <- fold.list[[r]][[f]]
   train_idx <- setdiff(seq_len(nrow(pheno)), valid_idx)
   
+  # Seleção dos dados fenotípicos e genotípicos
   yT <- pheno[train_idx, tr]
   xT <- geno[train_idx, ]
   yV <- pheno[valid_idx, tr]
   xV <- geno[valid_idx, ]
   
+  # Ajuste do modelo MARS de grau 3
   fit <- earth(x = xT, y = yT, degree = 3)
   
+  # Predição para treino e validação
   pred_T <- predict(fit, xT)
   pred_V <- predict(fit, xV)
   
@@ -544,8 +613,10 @@ results_cv_MARS_3 <- foreach(
     select(Overall = rss, marker, Rep, Fold) %>%
     mutate(marker = stringr::str_replace_all(marker, "-unused", ""))
   
+  # Limpeza de memória
   gc()  
   
+  # Criação do dataframe de resultados
   tibble(
     Trait = tr,
     Degree = 3,
@@ -561,17 +632,23 @@ results_cv_MARS_3 <- foreach(
   )
 }
 
+# Finalização do cluster de paralelização
 stopCluster(cl)
 
+# Salvando os resultados da validação cruzada
 saveRDS(results_cv_MARS_3, file = "output/results_cv_MARS_3.rds")
 ```
 
-## 3. Decision Tree
+### 3.3. Decision Tree
+
+O modelo de árvore de decisão é uma técnica de aprendizado de máquina que utiliza uma estrutura hierárquica para tomar decisões baseadas em regras. A arvore de decisão utiliza o critério de divisão por meio erro quadrático médio (MSE) para segmentar os dados em subconjuntos, permitindo a predição de fenótipos com base nos marcadores genéticos. Este modelo é particularmente útil para problemas de classificação e regressão, pois permite interpretar facilmente as regras de decisão. Neste estudo, implementamos o modelo de árvore de decisão utilizando o pacote `rpart`. 
 
 ```{r cv-dt, message=FALSE, warning=FALSE, eval = FALSE}
+# Configuração do ambiente de paralelização
 cl <- makeCluster(max(1, detectCores() - 1))
 registerDoParallel(cl)
 
+# Criação de um grid de combinações de traits, repetições e folds
 combos_dt <- expand.grid(
   trait = traits,
   rep = seq_len(nrept),
@@ -579,36 +656,63 @@ combos_dt <- expand.grid(
   stringsAsFactors = FALSE
 )
 
+# Execução da validação cruzada para o modelo de árvore de decisão
 results_cv_DT <- foreach(
   idx = seq_len(nrow(combos_dt)),
   .packages = c("rpart", "dplyr", "tibble", "caret"),
   .combine = bind_rows
 ) %dopar% {
+  # Extração dos parâmetros do grid
   tr <- combos_dt$trait[idx]
   r <- combos_dt$rep[idx]
   f <- combos_dt$fold[idx]
   
+  # Seleção dos índices de validação cruzada
   valid_idx <- fold.list[[r]][[f]]
   train_idx <- setdiff(seq_len(nrow(pheno)), valid_idx)
   
+  # Seleção dos dados fenotípicos e genotípicos
   yT <- pheno[[tr]][train_idx]  # vetor
   xT <- data.frame(geno[train_idx, ])
   yV <- pheno[[tr]][valid_idx]
   xV <- data.frame(geno[valid_idx, ])
   
+  # Ajuste do modelo de árvore de decisão
   fit <- rpart(yT ~ ., data = xT)
   
+  # Predição para treino e validação
   pred_T <- predict(fit, xT)
   pred_V <- predict(fit, xV)
   
+  # Extrair importância das variáveis
   imp_df <- data.frame(varImp(fit, scale = TRUE, value = "rss"))
+
   # Adiciona informações de repetição e fold, mantendo nomes dos marcadores
   imp_df$marker <- rownames(imp_df)
   imp_df$Rep <- r
   imp_df$Fold <- f
   
+  # Ajusta nomes das colunas e remove sufixo indesejado dos marcadores
+  imp_df <- imp_df %>%
+    select(Overall = rss, marker, Rep, Fold) %>%
+    mutate(marker = stringr::str_replace_all(marker, "-unused", ""))
+  
+  # Cria dataframe com a importância das variáveis para os marcadores não selecionados na arvore
+  imp_df_setdiff <- data.frame(
+    Overall = 0,
+    marker = setdiff(colnames(x), imp_df$marker),
+    Rep = r,
+    Fold = f
+  )
+  
+  # Agrupa os dados de importância
+  imp_df <- imp_df %>%
+    full_join(imp_df_setdiff)
+  
+  # Limpeza de memória
   gc()
   
+  # Criação do dataframe de resultados
   tibble(
     Trait = tr,
     Rep = r,
@@ -623,17 +727,23 @@ results_cv_DT <- foreach(
   )
 }
 
+# Finalização do cluster de paralelização
 stopCluster(cl)
 
+# Salvando os resultados da validação cruzada
 saveRDS(results_cv_DT, file = "output/results_cv_DT.rds")
 ```
 
-## 4. Bagging
+### 3.4. Bagging
+
+O modelo de Bagging (Bootstrap Aggregating) é uma técnica de ensemble que combina múltiplos modelos para melhorar a acurácia preditiva. O Baggin realiza amostragem com reposição dos dados de treino para criar múltiplos subconjuntos, treinando um modelo em cada subconjunto e combinando as previsões. Esta técnica ajuda a reduzir a variância do modelo e melhora a robustez das previsões. Neste estudo, implementamos o modelo de Bagging utilizando o pacote `randomForest`. 
 
 ```{r cv-bag, message=FALSE, warning=FALSE, eval = FALSE}
+# Configuração do ambiente de paralelização
 cl <- makeCluster(max(1, detectCores() - 1))
 registerDoParallel(cl)
 
+# Criação de um grid de combinações de traits, repetições e folds
 combos_bag <- expand.grid(
   trait = traits,
   rep = seq_len(nrept),
@@ -641,36 +751,46 @@ combos_bag <- expand.grid(
   stringsAsFactors = FALSE
 )
 
+# Execução da validação cruzada para o modelo Bagging
 results_cv_Bag <- foreach(
   idx = seq_len(nrow(combos_bag)),
   .packages = c("randomForest", "dplyr", "tibble", "caret"),
   .combine = bind_rows
 ) %dopar% {
+  # Extração dos parâmetros do grid
   tr <- combos_bag$trait[idx]
   r <- combos_bag$rep[idx]
   f <- combos_bag$fold[idx]
   
+  # Seleção dos índices de validação cruzada
   valid_idx <- fold.list[[r]][[f]]
   train_idx <- setdiff(seq_len(nrow(pheno)), valid_idx)
   
+  # Seleção dos dados fenotípicos e genotípicos
   yT <- pheno[[tr]][train_idx]  # vetor
   xT <- geno[train_idx, ]
   yV <- pheno[[tr]][valid_idx]
   xV <- geno[valid_idx, ]
   
+  # Ajuste do modelo Bagging
   fit <- randomForest(x = xT, y = yT, mtry = ncol(xT))
 
+  # Predição para treino e validação
   pred_T <- predict(fit, xT)
   pred_V <- predict(fit, xV)
   
+  # Extrair importância das variáveis
   imp_df <- data.frame(varImp(fit, scale = TRUE, value = "rss"))
+  
   # Adiciona informações de repetição e fold, mantendo nomes dos marcadores
   imp_df$marker <- rownames(imp_df)
   imp_df$Rep <- r
   imp_df$Fold <- f
   
+  # Limpeza de memória
   gc()
   
+  # Criação do dataframe de resultados
   tibble(
     Trait = tr,
     Rep = r,
@@ -685,17 +805,23 @@ results_cv_Bag <- foreach(
   )
 }
 
+# Finalização do cluster de paralelização
 stopCluster(cl)
 
+# Salvando os resultados da validação cruzada
 saveRDS(results_cv_Bag, file = "output/results_cv_Bag.rds")
 ```
 
-## 5. Random Forest
+### 3.5. Random Forest
+
+O modelo Random Forest é uma técnica de aprendizado de máquina que utiliza múltiplas árvores de decisão para melhorar a acurácia preditiva. Similarmente ao Bagging, o Random Forest realiza amostragem com reposição dos dados de treino, mas também introduz aleatoriedade na seleção de variáveis em cada nó da árvore. Esta técnica ajuda a reduzir o overfitting e melhora a robustez das previsões. O Random Forest é amplamente utilizado em problemas de regressão e classificação devido à sua capacidade de lidar com grandes conjuntos de dados e variáveis correlacionadas. Neste estudo, implementamos o modelo Random Forest utilizando o pacote `randomForest`. 
 
 ```{r cv-rf, message=FALSE, warning=FALSE, eval = FALSE}
+# Configuração do ambiente de paralelização
 cl <- makeCluster(max(1, detectCores() - 1))
 registerDoParallel(cl)
 
+# Criação de um grid de combinações de traits, repetições e folds
 combos_rf <- expand.grid(
   trait = traits,
   rep = seq_len(nrept),
@@ -703,36 +829,46 @@ combos_rf <- expand.grid(
   stringsAsFactors = FALSE
 )
 
+# Execução da validação cruzada para o modelo Random Forest
 results_cv_RF <- foreach(
   idx = seq_len(nrow(combos_rf)),
   .packages = c("randomForest", "dplyr", "tibble", "caret"),
   .combine = bind_rows
 ) %dopar% {
+  # Extração dos parâmetros do grid
   tr <- combos_rf$trait[idx]
   r <- combos_rf$rep[idx]
   f <- combos_rf$fold[idx]
   
+  # Seleção dos índices de validação cruzada
   valid_idx <- fold.list[[r]][[f]]
   train_idx <- setdiff(seq_len(nrow(pheno)), valid_idx)
   
+  # Seleção dos dados fenotípicos e genotípicos
   yT <- pheno[[tr]][train_idx]  # vetor
   xT <- geno[train_idx, ]
   yV <- pheno[[tr]][valid_idx]
   xV <- geno[valid_idx, ]
   
+  # Ajuste do modelo Random Forest
   fit <- randomForest(xT, yT, mtry = floor(ncol(xT) / 3), ntree = 500)
   
+  # Predição para treino e validação
   pred_T <- predict(fit, xT)
   pred_V <- predict(fit, xV)
   
+  # Extrair importância das variáveis
   imp_df <- data.frame(varImp(fit, scale = TRUE, value = "rss"))
+  
   # Adiciona informações de repetição e fold, mantendo nomes dos marcadores
   imp_df$marker <- rownames(imp_df)
   imp_df$Rep <- r
   imp_df$Fold <- f
   
+  # Limpeza de memória
   gc()
   
+  # Criação do dataframe de resultados
   tibble(
     Trait = tr,
     Rep = r,
@@ -747,17 +883,23 @@ results_cv_RF <- foreach(
   )
 }
 
+# Finalização do cluster de paralelização
 stopCluster(cl)
 
+# Salvando os resultados da validação cruzada
 saveRDS(results_cv_RF, file = "output/results_cv_RF.rds")
 ```
 
-## 6. Boosting (GBM)
+### 3.6. Boosting (GBM)
+
+O modelo de Boosting, especificamente o GBM (Gradient Boosting Machine), é uma técnica de aprendizado de máquina que combina múltiplos modelos fracos para criar um modelo forte. O GBM ajusta iterativamente os erros dos modelos anteriores, melhorando a acurácia preditiva. Neste estudo, implementamos o modelo GBM utilizando o pacote `gbm`. 
 
 ```{r cv-gbm, message=FALSE, warning=FALSE, eval = FALSE}
+# Configuração do ambiente de paralelização
 cl <- makeCluster(max(1, detectCores() - 1))
 registerDoParallel(cl)
 
+# Criação de um grid de combinações de traits, repetições e folds
 combos_gbm <- expand.grid(
   trait = traits,
   rep = seq_len(nrept),
@@ -765,23 +907,28 @@ combos_gbm <- expand.grid(
   stringsAsFactors = FALSE
 )
 
+# Execução da validação cruzada para o modelo GBM
 results_cv_GBM <- foreach(
   idx = seq_len(nrow(combos_gbm)),
   .packages = c("gbm", "dplyr", "tibble", "caret"),
   .combine = bind_rows
 ) %dopar% {
+  # Extração dos parâmetros do grid
   tr <- combos_gbm$trait[idx]
   r <- combos_gbm$rep[idx]
   f <- combos_gbm$fold[idx]
   
+  # Seleção dos índices de validação cruzada
   valid_idx <- fold.list[[r]][[f]]
   train_idx <- setdiff(seq_len(nrow(pheno)), valid_idx)
   
+  # Seleção dos dados fenotípicos e genotípicos
   yT <- pheno[[tr]][train_idx]  # vetor
   xT <- geno[train_idx, ]
   yV <- pheno[[tr]][valid_idx]
   xV <- geno[valid_idx, ]
   
+  # Ajuste do modelo GBM
   fit <- gbm(
     yT ~ .,
     data = data.frame(yT, xT),
@@ -790,17 +937,22 @@ results_cv_GBM <- foreach(
     interaction.depth = 2
   )
   
+  # Predição para treino e validação
   pred_T <- predict(fit, data.frame(xT), n.trees = 500)
   pred_V <- predict(fit, data.frame(xV), n.trees = 500)
   
+  # Extrair importância das variáveis
   imp_df <- data.frame(varImp(fit, scale = TRUE, value = "rss" , numTrees  = 500))
+  
   # Adiciona informações de repetição e fold, mantendo nomes dos marcadores
   imp_df$marker <- rownames(imp_df)
   imp_df$Rep <- r
   imp_df$Fold <- f
   
+  # Limpeza de memória
   gc()
   
+  # Criação do dataframe de resultados
   tibble(
     Trait = tr,
     Rep = r,
@@ -815,17 +967,23 @@ results_cv_GBM <- foreach(
   )
 }
 
+# Finalização do cluster de paralelização
 stopCluster(cl)
 
+# Salvando os resultados da validação cruzada
 saveRDS(results_cv_GBM, file = "output/results_cv_GBM.rds")
 ```
 
-## 7. Perceptron Multicamadas (PMC)
+### 3.7. Perceptron Multicamadas (PMC)
+
+O modelo de Perceptron Multicamadas (PMC) é uma rede neural feedforward que pode capturar relações não lineares complexas entre os marcadores genéticos e os fenótipos. Neste estudo, implementamos o PMC utilizando o pacote `neuralnet` para avaliar a capacidade preditiva do modelo em relação aos fenótipos simulados.
 
 ```{r cv-nn, message=FALSE, warning=FALSE, eval = FALSE}
+# Configuração do ambiente de paralelização
 cl <- makeCluster(max(1, detectCores() - 1))
 registerDoParallel(cl)
 
+# Criação de um grid de combinações de traits, repetições, folds e camadas ocultas
 combos_nn <- expand.grid(
   trait = traits,
   rep = seq_len(nrept),
@@ -835,25 +993,26 @@ combos_nn <- expand.grid(
   stringsAsFactors = FALSE
 )
 
-
+# Função para criar lista de folds
 results_cv_NN <- foreach(
   idx = seq_len(nrow(combos_nn)),
   .packages = c("ANN2", "neuralnet", "dplyr", "tibble"),
   .combine = bind_rows
 ) %dopar% {
-
+  # Extração dos parâmetros do grid
   tr <- combos_nn$trait[idx]
   r <- combos_nn$rep[idx]
   f <- combos_nn$fold[idx]
   h1 <- combos_nn$h1[idx]
   h2 <- combos_nn$h2[idx]
-  
   hidden.layers <- case_when(h2 != 0 ~ c(h1, h2),
                              TRUE ~ h1)
   
+  # Seleção dos índices de validação cruzada
   valid_idx <- fold.list[[r]][[f]]
   train_idx <- setdiff(seq_len(nrow(pheno)), valid_idx)
   
+  # Seleção dos dados fenotípicos e genotípicos
   yT <- pheno[[tr]][train_idx]  # vetor
   xT <- geno[train_idx, ]
   yV <- pheno[[tr]][valid_idx]
@@ -871,9 +1030,14 @@ results_cv_NN <- foreach(
     val.prop = 0
   )
   
+  # Predição para treino e validação
   pred_T <- predict(NN, xT)$predictions
   pred_V <- predict(NN, xV)$predictions
   
+  # Limpeza de memória
+  gc()
+  
+  # Criação do dataframe de resultados
   tibble(
     Trait = tr,
     Rep = r,
@@ -889,13 +1053,16 @@ results_cv_NN <- foreach(
   )
 }
 
+# Finalização do cluster de paralelização
 stopCluster(cl)
 
+# Salvando os resultados da validação cruzada
 saveRDS(results_cv_NN, file = "output/results_cv_NN.rds")
 ```
 
+## 4. Resultados Consolidados
 
-## Resultados Consolidados
+Nesta seção, consolidamos os resultados dos modelos de predição aplicados aos fenótipos simulados. Os resultados são apresentados em uma tabela que resume as métricas de desempenho (R² e RMSE) para cada método e traço avaliado.
 
 ```{r results-all, echo=TRUE}
 # Carregar resultados
@@ -910,7 +1077,7 @@ results_cv_Bag <- readRDS("output/results_cv_Bag.rds")
 results_cv_RF <- readRDS("output/results_cv_RF.rds")
 results_cv_GBM <- readRDS("output/results_cv_GBM.rds")
 results_cv_NN <- readRDS("output/results_cv_NN.rds")
-  
+
 
 # Agrupa por Trait e configuração de neurônios
 resumo_nn <- results_cv_NN %>%
@@ -960,16 +1127,23 @@ table_final <- combined_results %>%
     RMSE_Valid_Mean = mean(RMSE_Valid, na.rm = TRUE),
     RMSE_Valid_SD   = sd(RMSE_Valid, na.rm = TRUE)
   ) %>%
-  ungroup() %>% 
+  ungroup() %>%
   bind_rows(
     melhores_config_por_trait %>%
       mutate(Method = "NN") %>%
-      dplyr::select(Method, Trait, R2_Valid_Mean, R2_Valid_SD, RMSE_Valid_Mean, RMSE_Valid_SD)
+      select(
+        Method,
+        Trait,
+        R2_Valid_Mean,
+        R2_Valid_SD,
+        RMSE_Valid_Mean,
+        RMSE_Valid_SD
+      )
   )
 
 # Exibir tabela consolidada
 table_final %>%
-  arrange(Trait, Method) %>%
+  arrange(Trait, desc(R2_Valid_Mean)) %>%
   mutate_if(is.numeric, round, 4) %>%
   kable(booktabs = TRUE, caption = "Resultados Consolidados por Método e Traço") %>%
   kable_styling(full_width = FALSE)
@@ -978,3 +1152,24 @@ table_final %>%
 writexl::write_xlsx(table_final, "output/simulated_results_consolidated.xlsx")
 ```
 
+A comparação dos métodos para as seis variáveis (V1 a V6) evidencia perfis distintos de acurácia e robustez. Em V1, o MARS_2 destacou-se com a maior correlação preditiva (R² = 0,7653) e o menor RMSE (1,4861), seguido de perto por RF (R² = 0,7444; RMSE = 1,5447) e BAG (R² = 0,7437; RMSE = 1,5453). GBM também mostrou bom equilíbrio (R² = 0,7209; RMSE = 1,5889), enquanto a rede neural ficou atrás em R² (0,4380) e registrou o maior erro (2,2661). Os modelos GBLUP apresentaram R² em torno de 0,61–0,64 e RMSE acima de 1,77, indicando performance intermediária.
+
+Em V2, o GBLUP_a liderou em correlação (R² = 0,7164) e obteve o menor RMSE (0,7513), seguido por GBM (R² = 0,6910; RMSE = 0,7790) e BAG (R² = 0,6656; RMSE = 0,8482). RF manteve bom desempenho (R² = 0,6672; RMSE = 0,8480), enquanto DT (R² = 0,3090; RMSE = 1,0910) e MARS_1 foram os de pior acurácia. A rede neural exibiu R² moderado (0,5372) mas erro relativamente alto (0,9836).
+
+Na variável V3, GBLUP_a novamente se destacou (R² = 0,6668; RMSE = 0,6989), seguido por RF (R² = 0,5789; RMSE = 0,7879) e BAG (R² = 0,5750; RMSE = 0,7896). GBM manteve-se consistente (R² = 0,5481; RMSE = 0,7924), enquanto DT (R² = 0,2526; RMSE = 0,9650) e MARS_3 (R² = 0,3782; RMSE = 1,0304) tiveram os piores resultados. A NN ficou no meio-campo (R² = 0,4574; RMSE = 0,9127).
+
+Para V4, o GBLUP_a conduziu novamente (R² = 0,6588; RMSE = 0,6422), com BAG (R² = 0,5753; RMSE = 0,7185) e GBM (R² = 0,5524; RMSE = 0,7214) logo atrás. RF e MARS_1 mantiveram perfis semelhantes, enquanto DT (R² = 0,2824) e MARS_3 (R² = 0,3684; RMSE = 0,9553) apresentaram as menores correlações preditivas. A rede neural ficou em posição intermediária, com R² = 0,4437 e RMSE = 0,8460.
+
+Na análise de V5, GBLUP_a obteve a maior correlação (R² = 0,5617) e RMSE mais baixo (0,7021). BAG (R² = 0,4299; RMSE = 0,7695) e RF (R² = 0,4356; RMSE = 0,7677) também ofereceram boa precisão, enquanto DT (R² = 0,1408; RMSE = 0,9162) e MARS_3 (R² = 0,2433; RMSE = 1,0260) ficaram no final da fila. A NN (R² = 0,3215; RMSE = 0,8936) mostrou resultado moderado.
+
+Em V6, o padrão se repetiu: GBLUP_a liderou (R² = 0,5565; RMSE = 0,6125), com RF (R² = 0,4640; RMSE = 0,6572) e BAG (R² = 0,4604; RMSE = 0,6582) em seguida. GBM e GBLUP_ade mantiveram-se próximos, enquanto MARS_3 (R² = 0,2519; RMSE = 0,8841) e DT (R² = 0,2557; RMSE = 0,7519) foram os menos eficazes. A NN repetiu sua tendência de correlação moderada (R² = 0,3064) com erro acima de 0,80.
+
+De modo geral, GBLUP_a apresentou consistência em correlações elevadas e baixo erro em V2–V6, ao passo que métodos de árvore (BAG, GBM, RF) combinaram boa precisão (RMSE reduzido) com altos R² apenas em V1. Redes neurais ficaram sempre atrás em precisão de erro e desempenho intermediário em correlação. MARS_2 foi o único não-GBLUP a superar 0,75 de R², porém só em V1. Esses resultados sugerem que a escolha do modelo deve considerar o balanço entre correlação e magnitude do erro, e que abordagens híbridas podem oferecer ganhos adicionais de acurácia na seleção genômica.
+
+## 5. Conclusão
+
+Neste estudo, avaliamos a acurácia preditiva de diferentes modelos de aprendizado de máquina aplicados a fenótipos simulados. Os resultados demonstraram que o modelo GBLUP_a apresentou a melhor performance em termos de correlação preditiva (R²) e erro quadrático médio (RMSE) para a maioria dos fenótipos. Modelos como Random Forest e Bagging também mostraram resultados competitivos, especialmente em fenótipos com maior complexidade genética.
+
+Além disso, o modelo MARS_2 destacou-se em V1, superando os modelos GBLUP em correlação preditiva. A rede neural, embora tenha mostrado resultados razoáveis, não alcançou a acurácia dos modelos GBLUP e MARS.
+
+Esses achados sugerem que a escolha do modelo de predição deve ser baseada nas características específicas dos fenótipos e na complexidade genética envolvida. Modelos baseados em árvores, como Random Forest e Bagging, podem ser particularmente eficazes para fenótipos com interações complexas entre marcadores. Por outro lado, GBLUP continua sendo uma escolha sólida para muitos cenários de predição genômica.
