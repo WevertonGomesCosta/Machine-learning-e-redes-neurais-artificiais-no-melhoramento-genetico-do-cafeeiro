@@ -8,7 +8,7 @@ url: https://wevertongomescosta.github.io/Machine-learning-e-redes-neurais-artif
 output:
   workflowr::wflow_html:
     toc: TRUE
-    toc.float: TRUE
+    toc_float: TRUE
   highlight: github
 editor_options:
   chunk_output_type: console
@@ -19,7 +19,7 @@ github-repo: wevertongomescosta/Machine-learning-e-redes-neurais-artificiais-no-
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
 
-# Seleção Genõmica Ampla - Dados Reais (Coffea arabica)
+# Seleção Genômica Ampla - Dados Reais (Coffea arabica)
 
 Este documento apresenta a implementação de modelos mistos para seleção genômica ampla (GWS) utilizando dados reais de Coffea arabica. 
 
@@ -351,7 +351,7 @@ for (r in seq_len(nrept)) {
 rm(r, df, folds)
 ```
 
-## 3. Modelos Mistos para Seleção Genômica Ampla (GWS)
+## 3. Modelos para GWS
 
 ### 3.1 G-BLUP
 
@@ -1074,6 +1074,7 @@ results_cv_DT <- foreach(
     Fold = f
   )
   
+  # Agrupa os dados de importância
   imp_df <- imp_df %>%
     full_join(imp_df_setdiff)
   
@@ -1095,8 +1096,10 @@ results_cv_DT <- foreach(
   )
 }
 
+# Finalização do cluster
 stopCluster(cl)
 
+# Salvando os resultados da validação cruzada
 saveRDS(results_cv_DT, file = "output/real_results_cv_DT.rds")
 ```
 
@@ -1109,9 +1112,11 @@ rm(combos_dt, results_cv_DT)
 O Bagging (Bootstrap Aggregating) é uma técnica de ensemble que combina múltiplos modelos treinados em subconjuntos aleatórios dos dados para melhorar a robustez e a precisão das previsões. Neste estudo, utilizamos o pacote `randomForest` para implementar o Bagging, ajustando modelos de floresta aleatória com todos os marcadores genéticos.
 
 ```{r cv-bag, message=FALSE, warning=FALSE, eval=FALSE}
+# Configuração do cluster para paralelização
 cl <- makeCluster(max(1, detectCores() - 1))
 registerDoParallel(cl)
 
+# Combinações de traits, repetições e dobras
 combos_bag <- expand.grid(
   trait = traits,
   rep = seq_len(nrept),
@@ -1119,36 +1124,46 @@ combos_bag <- expand.grid(
   stringsAsFactors = FALSE
 )
 
+# Execução da validação cruzada para Bagging
 results_cv_Bag <- foreach(
   idx = seq_len(nrow(combos_bag)),
   .packages = c("randomForest", "dplyr", "tibble", "caret"),
   .combine = bind_rows
 ) %dopar% {
+  # Extração dos parâmetros da combinação atual
   tr <- combos_bag$trait[idx]
   r <- combos_bag$rep[idx]
   f <- combos_bag$fold[idx]
   
+  # Preparação dos dados para o modelo
   valid_idx <- fold.list[[r]][[f]]
   train_idx <- setdiff(seq_len(nrow(pheno)), valid_idx)
   
+  # Criando dados de treinamento e validação
   yT <- pheno[[tr]][train_idx]  # vetor
   xT <- geno[train_idx, ]
   yV <- pheno[[tr]][valid_idx]
   xV <- geno[valid_idx, ]
   
+  # Ajuste do modelo Bagging
   fit <- randomForest(x = xT, y = yT, mtry = ncol(xT))
 
+  # Predição nos conjuntos de treinamento e validação
   pred_T <- predict(fit, xT)
   pred_V <- predict(fit, xV)
   
+  # Importância das variáveis
   imp_df <- data.frame(varImp(fit, scale = TRUE, value = "rss"))
+  
   # Adiciona informações de repetição e fold, mantendo nomes dos marcadores
   imp_df$marker <- rownames(imp_df)
   imp_df$Rep <- r
   imp_df$Fold <- f
   
+  # Limpeza de memória
   gc()
   
+  # Criação do dataframe de resultados
   tibble(
     Trait = tr,
     Rep = r,
@@ -1163,8 +1178,10 @@ results_cv_Bag <- foreach(
   )
 }
 
+# Finalização do cluster
 stopCluster(cl)
 
+# Salvando os resultados da validação cruzada
 saveRDS(results_cv_Bag, file = "output/real_results_cv_Bag.rds")
 ```
 
@@ -1177,9 +1194,11 @@ rm(combos_bag, results_cv_Bag)
 O Random Forest é um método de aprendizado de máquina que combina múltiplas árvores de decisão para melhorar a precisão e reduzir o overfitting. Neste estudo, utilizamos o pacote `randomForest` para implementar o Random Forest, ajustando modelos com um número reduzido de marcadores genéticos.
 
 ```{r cv-rf, message=FALSE, warning=FALSE, eval=FALSE}
+# Configuração do cluster para paralelização  
 cl <- makeCluster(max(1, detectCores() - 1))
 registerDoParallel(cl)
 
+# Combinações de traits, repetições e dobras
 combos_rf <- expand.grid(
   trait = traits,
   rep = seq_len(nrept),
@@ -1187,37 +1206,46 @@ combos_rf <- expand.grid(
   stringsAsFactors = FALSE
 )
 
+# Execução da validação cruzada para Random Forest
 results_cv_RF <- foreach(
   idx = seq_len(nrow(combos_rf)),
   .packages = c("randomForest", "dplyr", "tibble", "caret"),
   .combine = bind_rows
 ) %dopar% {
-
+  # Extração dos parâmetros da combinação atual
   tr <- combos_rf$trait[idx]
   r <- combos_rf$rep[idx]
   f <- combos_rf$fold[idx]
   
+  # Preparação dos dados para o modelo
   valid_idx <- fold.list[[r]][[f]]
   train_idx <- setdiff(seq_len(nrow(pheno)), valid_idx)
   
+  # Criando dados de treinamento e validação
   yT <- pheno[[tr]][train_idx]  # vetor
   xT <- geno[train_idx, ]
   yV <- pheno[[tr]][valid_idx]
   xV <- geno[valid_idx, ]
   
+  # Ajuste do modelo Random Forest
   fit <- randomForest(xT, yT, mtry = floor(ncol(xT) / 3), ntree = 500)
   
+  # Predição nos conjuntos de treinamento e validação
   pred_T <- predict(fit, xT)
   pred_V <- predict(fit, xV)
   
+  # Importância das variáveis
   imp_df <- data.frame(varImp(fit, scale = TRUE, value = "rss"))
+  
   # Adiciona informações de repetição e fold, mantendo nomes dos marcadores
   imp_df$marker <- rownames(imp_df)
   imp_df$Rep <- r
   imp_df$Fold <- f
   
+  # Limpeza de memória
   gc()
   
+  # Criação do dataframe de resultados
   tibble(
     Trait = tr,
     Rep = r,
@@ -1232,8 +1260,10 @@ results_cv_RF <- foreach(
   )
 }
 
+# Finalização do cluster
 stopCluster(cl)
 
+# Salvando os resultados da validação cruzada
 saveRDS(results_cv_RF, file = "output/real_results_cv_RF.rds")
 ```
 
@@ -1246,9 +1276,11 @@ rm(combos_rf, results_cv_RF)
 O Boosting é uma técnica de aprendizado de máquina que combina múltiplos modelos fracos para criar um modelo forte. Neste estudo, utilizamos o pacote `gbm` para implementar o Boosting, ajustando modelos com todos os marcadores genéticos.
 
 ```{r cv-gbm, message=FALSE, warning=FALSE, eval=FALSE}
+# Configuração do cluster para paralelização
 cl <- makeCluster(max(1, detectCores() - 1))
 registerDoParallel(cl)
 
+# Combinações de traits, repetições e dobras
 combos_gbm <- expand.grid(
   trait = traits,
   rep = seq_len(nrept),
@@ -1256,27 +1288,32 @@ combos_gbm <- expand.grid(
   stringsAsFactors = FALSE
 )
 
+# Execução da validação cruzada para GBM
 results_cv_GBM <- foreach(
   idx = seq_len(nrow(combos_gbm)),
   .packages = c("gbm", "dplyr", "tibble", "caret"),
   .combine = bind_rows
 ) %dopar% {
-
+  # Extração dos parâmetros da combinação atual
   tr <- combos_gbm$trait[idx]
   r <- combos_gbm$rep[idx]
   f <- combos_gbm$fold[idx]
   
+  # Preparação dos dados para o modelo
   valid_idx <- fold.list[[r]][[f]]
   train_idx <- setdiff(seq_len(nrow(pheno)), valid_idx)
   
+  # Criando dados de treinamento e validação
   yT <- pheno[[tr]][train_idx]  # vetor
   xT <- geno[train_idx, ]
   yV <- pheno[[tr]][valid_idx]
   xV <- geno[valid_idx, ]
   
+  # Ajuste do modelo GBM
   y <- pheno[[tr]]
   x <- geno
   
+  # Ajuste do modelo GBM
   fit <-
     gbm.fit(
       x = xT,
@@ -1286,17 +1323,22 @@ results_cv_GBM <- foreach(
       interaction.depth = 2
     )
   
+  # Predição nos conjuntos de treinamento e validação
   pred_T <- predict(fit, xT, n.trees = 500)
   pred_V <- predict(fit, xV, n.trees = 500)
   
+  # Importância das variáveis
   imp_df <- data.frame(varImp(fit, scale = TRUE, value = "rss" , numTrees  = 500))
+  
   # Adiciona informações de repetição e fold, mantendo nomes dos marcadores
   imp_df$marker <- rownames(imp_df)
   imp_df$Rep <- r
   imp_df$Fold <- f
   
+  # Ajusta nomes das colunas e remove sufixo indesejado dos marcadores
   gc()
   
+  # Criação do dataframe de resultados
   tibble(
     Trait = tr,
     Rep = r,
@@ -1311,8 +1353,10 @@ results_cv_GBM <- foreach(
   )
 }
 
+# Finalização do cluster
 stopCluster(cl)
 
+# Salvando os resultados da validação cruzada
 saveRDS(results_cv_GBM, file = "output/real_results_cv_GBM.rds")
 ```
 
@@ -1325,9 +1369,11 @@ rm(combos_gbm, results_cv_GBM)
 O Perceptron Multicamadas (PMC) é uma rede neural feedforward que pode capturar relações complexas entre os marcadores genéticos e os fenótipos. Neste estudo, utilizamos o pacote `neuralnet` para implementar o PMC, ajustando modelos com diferentes configurações de camadas ocultas.
 
 ```{r cv-nn, message=FALSE, warning=FALSE, eval=FALSE}
+# Configuração do cluster para paralelização
 cl <- makeCluster(max(1, detectCores() - 1))
 registerDoParallel(cl)
 
+# Combinações de traits, repetições e dobras
 combos_nn <- expand.grid(
   trait = traits,
   rep = seq_len(nrept),
@@ -1337,25 +1383,26 @@ combos_nn <- expand.grid(
   stringsAsFactors = FALSE
 )
 
-
+# Executando a validação cruzada para Perceptron Multicamadas (PMC)
 results_cv_NN <- foreach(
   idx = seq_len(nrow(combos_nn)),
   .packages = c("ANN2", "neuralnet", "dplyr", "tibble"),
   .combine = bind_rows
 ) %dopar% {
-
+  # Extração dos parâmetros da combinação atual
   tr <- combos_nn$trait[idx]
   r <- combos_nn$rep[idx]
   f <- combos_nn$fold[idx]
   h1 <- combos_nn$h1[idx]
   h2 <- combos_nn$h2[idx]
-  
   hidden.layers <- case_when(h2 != 0 ~ c(h1, h2),
                              TRUE ~ h1)
   
+  # Preparação dos dados para o modelo
   valid_idx <- fold.list[[r]][[f]]
   train_idx <- setdiff(seq_len(nrow(pheno)), valid_idx)
   
+  # Criando dados de treinamento e validação
   yT <- pheno[[tr]][train_idx]  # vetor
   xT <- geno[train_idx, ]
   yV <- pheno[[tr]][valid_idx]
@@ -1373,9 +1420,11 @@ results_cv_NN <- foreach(
     val.prop = 0
   )
   
+  # Predição nos conjuntos de treinamento e validação
   pred_T <- predict(NN, xT)$predictions
   pred_V <- predict(NN, xV)$predictions
   
+  # Criação do dataframe de resultados
   tibble(
     Trait = tr,
     Rep = r,
@@ -1391,8 +1440,10 @@ results_cv_NN <- foreach(
   )
 }
 
+# Finalização do cluster
 stopCluster(cl)
 
+# Salvando os resultados da validação cruzada
 saveRDS(results_cv_NN, file = "output/real_results_cv_NN.rds")
 ```
 
@@ -1480,7 +1531,10 @@ table_final %>%
   mutate_if(is.numeric, round, 4) %>%
   kable(booktabs = TRUE, caption = "Resultados Consolidados por Método e Traço") %>%
   kable_styling(full_width = FALSE)
+```
 
+
+```{r results-all-save, echo=TRUE, include=FALSE}
 writexl::write_xlsx(table_final, "output/real_results_consolidated_10r_3f.xlsx")
 ```
 
