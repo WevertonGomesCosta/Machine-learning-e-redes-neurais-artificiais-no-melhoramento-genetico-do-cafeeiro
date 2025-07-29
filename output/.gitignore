@@ -21,3 +21,4 @@ results_cv_GBLUP_a.rds
 results_cv_GBLUP_ad.rds
 results_cv_GBLUP_ade.rds
 simulated_results_consolidated.xlsx
+imp.tot.RData
