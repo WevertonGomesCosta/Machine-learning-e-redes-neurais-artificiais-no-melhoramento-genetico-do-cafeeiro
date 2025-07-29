@@ -8,6 +8,7 @@ url: https://wevertongomescosta.github.io/Machine-learning-e-redes-neurais-artif
 output:
   workflowr::wflow_html:
     toc: FALSE
+  highlight: github
 editor_options:
   chunk_output_type: console
 github-repo: wevertongomescosta/Machine-learning-e-redes-neurais-artificiais-no-melhoramento-genetico-do-cafeeiro
