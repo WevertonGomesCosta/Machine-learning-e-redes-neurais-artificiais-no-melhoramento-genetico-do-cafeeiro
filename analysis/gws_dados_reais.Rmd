@@ -308,7 +308,7 @@ Para validação cruzada, definimos o número de dobras (nfolds) e repetições 
 
 ```{r params}
 nfolds <- 3
-nrept  <- 5
+nrept  <- 10
 traits <- colnames(pheno)[-c(1,5)]
 
 # Alinhamento de IDs
@@ -403,7 +403,7 @@ results_cv_GBLUP_a <- foreach(
   .packages = c("sommer", "dplyr", "tibble"),
   .combine = bind_rows
 ) %dopar% {
-  idx=3
+  
   # Extração dos parâmetros da combinação atual
   tr <- combos$trait[idx]
   r <- combos$rep[idx]
@@ -434,16 +434,16 @@ results_cv_GBLUP_a <- foreach(
   )
   
   # Extração dos preditos e verdadeiros valores
-  pred <- fit$u
+  pred <- fit$u + fit$b[[1]]
   truth <- ph[[tr]]
   
   # Predição e métricas
-  pred <- data.frame(fit$u, ph)
+  pred <- data.frame(pred, ph)
   
   # Cálculo dos GEBVs para treino e validação
-  pred_T <- pred[-val_idx, "fit.u"]
+  pred_T <- pred[-val_idx, "pred"]
   truth_T <- pred[[tr]][-val_idx]
-  pred_V <- pred[val_idx, "fit.u"]
+  pred_V <- pred[val_idx, "pred"]
   truth_V <- pred[[tr]][val_idx]
   
   # Criação do dataframe de resultados
@@ -548,7 +548,7 @@ results_cv_GBLUP_ad <- foreach(
     random = ~ vsm(ism(genotipo), Gu = K1) + vsm(ism(genotipod), Gu = D1),
     data = td,
     rcov = ~ units,
-    tolParInv = ifelse(idx == 29 | idx == 45, 5e-3, 1e-6) # Ajuste de tolerância para a matriz inversa,
+    tolParInv = ifelse(idx == 29 | idx == 44 | idx == 75, 5e-3, 1e-6) # Ajuste de tolerância para a matriz inversa,
   )
   
 
@@ -557,7 +557,7 @@ results_cv_GBLUP_ad <- foreach(
   pred_d <- fit$uList$`vsm(ism(genotipod), Gu = D1`
   
   # Soma dos preditos aditivos e dominantes
-  pred <- pred_a + pred_d
+  pred <- pred_a + pred_d + fit$b[[1]]
   truth <- ph[[tr]]
   
   # Predição e métricas
@@ -679,7 +679,7 @@ results_cv_GBLUP_ade <- foreach(
     random = ~ vsm(ism(genotipo), Gu = K1) + vsm(ism(genotipod), Gu = D1) + vsm(ism(genotipoe), Gu = E1) ,
     data = td,
     rcov = ~ units,
-    tolParInv = ifelse(idx == 29 | idx == 45, 5e-3, 1e-6) # Ajuste de tolerância para a matriz inversa,
+    tolParInv = ifelse(idx == 29 | idx == 44 | idx == 75, 5e-3, 1e-6) # Ajuste de tolerância para a matriz inversa,
   )
   
   # Extração dos preditos e verdadeiros valores
@@ -688,11 +688,11 @@ results_cv_GBLUP_ade <- foreach(
   pred_e <- fit$uList$`vsm(ism(genotipoe), Gu = E1`
   
   # Soma dos preditos aditivos, dominantes e epistáticos
-  pred <- pred_a + pred_d + pred_e
+  pred <- pred_a + pred_d + pred_e + fit$b[[1]]
   truth <- ph[[tr]]
   
   # Predição e métricas
-  pred <- data.frame(fit$u, ph)
+  pred <- data.frame(pred, ph)
   
   # Cálculo dos GEBVs para treino e validação
   pred_T <- pred[-val_idx, "mu"]

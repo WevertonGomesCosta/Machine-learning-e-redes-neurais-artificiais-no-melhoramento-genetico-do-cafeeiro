@@ -643,15 +643,15 @@ project makes it easier to run your code on other machines.</p>
 <div class="panel panel-default">
 <div class="panel-heading">
 <p class="panel-title">
-<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomWevertonGomesCostaMachinelearningeredesneuraisartificiaisnomelhoramentogeneticodocafeeirotreece1b0cf4f1285496d62e262f3954eaad8103b909targetblankce1b0cfa">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomWevertonGomesCostaMachinelearningeredesneuraisartificiaisnomelhoramentogeneticodocafeeirotreeb3dd2a969ec1c015b640cc1a4c8c59cb95de876ftargetblankb3dd2a9a">
 <span class="glyphicon glyphicon-ok text-success"
 aria-hidden="true"></span> <strong>Repository version:</strong>
-<a href="https://github.com/WevertonGomesCosta/Machine-learning-e-redes-neurais-artificiais-no-melhoramento-genetico-do-cafeeiro/tree/ce1b0cf4f1285496d62e262f3954eaad8103b909" target="_blank">ce1b0cf</a>
+<a href="https://github.com/WevertonGomesCosta/Machine-learning-e-redes-neurais-artificiais-no-melhoramento-genetico-do-cafeeiro/tree/b3dd2a969ec1c015b640cc1a4c8c59cb95de876f" target="_blank">b3dd2a9</a>
 </a>
 </p>
 </div>
 <div
-id="strongRepositoryversionstrongahrefhttpsgithubcomWevertonGomesCostaMachinelearningeredesneuraisartificiaisnomelhoramentogeneticodocafeeirotreece1b0cf4f1285496d62e262f3954eaad8103b909targetblankce1b0cfa"
+id="strongRepositoryversionstrongahrefhttpsgithubcomWevertonGomesCostaMachinelearningeredesneuraisartificiaisnomelhoramentogeneticodocafeeirotreeb3dd2a969ec1c015b640cc1a4c8c59cb95de876ftargetblankb3dd2a9a"
 class="panel-collapse collapse">
 <div class="panel-body">
 <p>
@@ -661,7 +661,7 @@ reproducibility.
 </p>
 <p>
 The results in this page were generated with repository version
-<a href="https://github.com/WevertonGomesCosta/Machine-learning-e-redes-neurais-artificiais-no-melhoramento-genetico-do-cafeeiro/tree/ce1b0cf4f1285496d62e262f3954eaad8103b909" target="_blank">ce1b0cf</a>.
+<a href="https://github.com/WevertonGomesCosta/Machine-learning-e-redes-neurais-artificiais-no-melhoramento-genetico-do-cafeeiro/tree/b3dd2a969ec1c015b640cc1a4c8c59cb95de876f" target="_blank">b3dd2a9</a>.
 See the <em>Past versions</em> tab to see a history of the changes made
 to the R Markdown and HTML files.
 </p>
@@ -715,6 +715,10 @@ Ignored files:
 
 Unstaged changes:
     Modified:   analysis/gws_dados_reais.Rmd
+    Modified:   analysis/gws_dados_simulados.Rmd
+    Modified:   output/real_results_cv_GBLUP_a.rds
+    Modified:   output/real_results_cv_GBLUP_ad.rds
+    Modified:   output/real_results_cv_GBLUP_ade.rds
 
 </code></pre>
 <p>
@@ -759,6 +763,40 @@ Message
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>
+html
+</td>
+<td>
+<a href="https://rawcdn.githack.com/WevertonGomesCosta/Machine-learning-e-redes-neurais-artificiais-no-melhoramento-genetico-do-cafeeiro/dea00baca75198d5ec7c9da59d12a29267954cea/docs/gws_dados_reais.html" target="_blank">dea00ba</a>
+</td>
+<td>
+WevertonGomesCosta
+</td>
+<td>
+2025-07-28
+</td>
+<td>
+add gws_dados_reais.html
+</td>
+</tr>
+<tr>
+<td>
+Rmd
+</td>
+<td>
+<a href="https://github.com/WevertonGomesCosta/Machine-learning-e-redes-neurais-artificiais-no-melhoramento-genetico-do-cafeeiro/blob/ae7b8b72ecffebcc121ef25b02128da5d9dc970b/analysis/gws_dados_reais.Rmd" target="_blank">ae7b8b7</a>
+</td>
+<td>
+WevertonGomesCosta
+</td>
+<td>
+2025-07-28
+</td>
+<td>
+add gws_dados_reais.Rmd
+</td>
+</tr>
 <tr>
 <td>
 Rmd
@@ -1262,7 +1300,7 @@ dados fenotípicos e genotípicos, garantindo que correspondam
 corretamente. Por fim, geramos uma lista de dobras para validação
 cruzada.</p>
 <div class="sourceCode" id="cb34"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" tabindex="-1"></a>nfolds <span class="ot">&lt;-</span> <span class="dv">3</span></span>
-<span id="cb34-2"><a href="#cb34-2" tabindex="-1"></a>nrept  <span class="ot">&lt;-</span> <span class="dv">5</span></span>
+<span id="cb34-2"><a href="#cb34-2" tabindex="-1"></a>nrept  <span class="ot">&lt;-</span> <span class="dv">10</span></span>
 <span id="cb34-3"><a href="#cb34-3" tabindex="-1"></a>traits <span class="ot">&lt;-</span> <span class="fu">colnames</span>(pheno)[<span class="sc">-</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">5</span>)]</span>
 <span id="cb34-4"><a href="#cb34-4" tabindex="-1"></a></span>
 <span id="cb34-5"><a href="#cb34-5" tabindex="-1"></a><span class="co"># Alinhamento de IDs</span></span>
@@ -1340,7 +1378,7 @@ aleatórios.</p>
 <span id="cb37-16"><a href="#cb37-16" tabindex="-1"></a>  <span class="at">.packages =</span> <span class="fu">c</span>(<span class="st">&quot;sommer&quot;</span>, <span class="st">&quot;dplyr&quot;</span>, <span class="st">&quot;tibble&quot;</span>),</span>
 <span id="cb37-17"><a href="#cb37-17" tabindex="-1"></a>  <span class="at">.combine =</span> bind_rows</span>
 <span id="cb37-18"><a href="#cb37-18" tabindex="-1"></a>) <span class="sc">%dopar%</span> {</span>
-<span id="cb37-19"><a href="#cb37-19" tabindex="-1"></a>  idx<span class="ot">=</span><span class="dv">3</span></span>
+<span id="cb37-19"><a href="#cb37-19" tabindex="-1"></a>  </span>
 <span id="cb37-20"><a href="#cb37-20" tabindex="-1"></a>  <span class="co"># Extração dos parâmetros da combinação atual</span></span>
 <span id="cb37-21"><a href="#cb37-21" tabindex="-1"></a>  tr <span class="ot">&lt;-</span> combos<span class="sc">$</span>trait[idx]</span>
 <span id="cb37-22"><a href="#cb37-22" tabindex="-1"></a>  r <span class="ot">&lt;-</span> combos<span class="sc">$</span>rep[idx]</span>
@@ -1371,16 +1409,16 @@ aleatórios.</p>
 <span id="cb37-47"><a href="#cb37-47" tabindex="-1"></a>  )</span>
 <span id="cb37-48"><a href="#cb37-48" tabindex="-1"></a>  </span>
 <span id="cb37-49"><a href="#cb37-49" tabindex="-1"></a>  <span class="co"># Extração dos preditos e verdadeiros valores</span></span>
-<span id="cb37-50"><a href="#cb37-50" tabindex="-1"></a>  pred <span class="ot">&lt;-</span> fit<span class="sc">$</span>u</span>
+<span id="cb37-50"><a href="#cb37-50" tabindex="-1"></a>  pred <span class="ot">&lt;-</span> fit<span class="sc">$</span>u <span class="sc">+</span> fit<span class="sc">$</span>b[[<span class="dv">1</span>]]</span>
 <span id="cb37-51"><a href="#cb37-51" tabindex="-1"></a>  truth <span class="ot">&lt;-</span> ph[[tr]]</span>
 <span id="cb37-52"><a href="#cb37-52" tabindex="-1"></a>  </span>
 <span id="cb37-53"><a href="#cb37-53" tabindex="-1"></a>  <span class="co"># Predição e métricas</span></span>
-<span id="cb37-54"><a href="#cb37-54" tabindex="-1"></a>  pred <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(fit<span class="sc">$</span>u, ph)</span>
+<span id="cb37-54"><a href="#cb37-54" tabindex="-1"></a>  pred <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(pred, ph)</span>
 <span id="cb37-55"><a href="#cb37-55" tabindex="-1"></a>  </span>
 <span id="cb37-56"><a href="#cb37-56" tabindex="-1"></a>  <span class="co"># Cálculo dos GEBVs para treino e validação</span></span>
-<span id="cb37-57"><a href="#cb37-57" tabindex="-1"></a>  pred_T <span class="ot">&lt;-</span> pred[<span class="sc">-</span>val_idx, <span class="st">&quot;fit.u&quot;</span>]</span>
+<span id="cb37-57"><a href="#cb37-57" tabindex="-1"></a>  pred_T <span class="ot">&lt;-</span> pred[<span class="sc">-</span>val_idx, <span class="st">&quot;pred&quot;</span>]</span>
 <span id="cb37-58"><a href="#cb37-58" tabindex="-1"></a>  truth_T <span class="ot">&lt;-</span> pred[[tr]][<span class="sc">-</span>val_idx]</span>
-<span id="cb37-59"><a href="#cb37-59" tabindex="-1"></a>  pred_V <span class="ot">&lt;-</span> pred[val_idx, <span class="st">&quot;fit.u&quot;</span>]</span>
+<span id="cb37-59"><a href="#cb37-59" tabindex="-1"></a>  pred_V <span class="ot">&lt;-</span> pred[val_idx, <span class="st">&quot;pred&quot;</span>]</span>
 <span id="cb37-60"><a href="#cb37-60" tabindex="-1"></a>  truth_V <span class="ot">&lt;-</span> pred[[tr]][val_idx]</span>
 <span id="cb37-61"><a href="#cb37-61" tabindex="-1"></a>  </span>
 <span id="cb37-62"><a href="#cb37-62" tabindex="-1"></a>  <span class="co"># Criação do dataframe de resultados</span></span>
@@ -1478,7 +1516,7 @@ dominantes (GEBVs dominantes), - <span class="math inline">\(e\)</span>
 <span id="cb39-44"><a href="#cb39-44" tabindex="-1"></a>    <span class="at">random =</span> <span class="sc">~</span> <span class="fu">vsm</span>(<span class="fu">ism</span>(genotipo), <span class="at">Gu =</span> K1) <span class="sc">+</span> <span class="fu">vsm</span>(<span class="fu">ism</span>(genotipod), <span class="at">Gu =</span> D1),</span>
 <span id="cb39-45"><a href="#cb39-45" tabindex="-1"></a>    <span class="at">data =</span> td,</span>
 <span id="cb39-46"><a href="#cb39-46" tabindex="-1"></a>    <span class="at">rcov =</span> <span class="sc">~</span> units,</span>
-<span id="cb39-47"><a href="#cb39-47" tabindex="-1"></a>    <span class="at">tolParInv =</span> <span class="fu">ifelse</span>(idx <span class="sc">==</span> <span class="dv">29</span> <span class="sc">|</span> idx <span class="sc">==</span> <span class="dv">45</span>, <span class="fl">5e-3</span>, <span class="fl">1e-6</span>) <span class="co"># Ajuste de tolerância para a matriz inversa,</span></span>
+<span id="cb39-47"><a href="#cb39-47" tabindex="-1"></a>    <span class="at">tolParInv =</span> <span class="fu">ifelse</span>(idx <span class="sc">==</span> <span class="dv">29</span> <span class="sc">|</span> idx <span class="sc">==</span> <span class="dv">44</span> <span class="sc">|</span> idx <span class="sc">==</span> <span class="dv">75</span>, <span class="fl">5e-3</span>, <span class="fl">1e-6</span>) <span class="co"># Ajuste de tolerância para a matriz inversa,</span></span>
 <span id="cb39-48"><a href="#cb39-48" tabindex="-1"></a>  )</span>
 <span id="cb39-49"><a href="#cb39-49" tabindex="-1"></a>  </span>
 <span id="cb39-50"><a href="#cb39-50" tabindex="-1"></a></span>
@@ -1487,7 +1525,7 @@ dominantes (GEBVs dominantes), - <span class="math inline">\(e\)</span>
 <span id="cb39-53"><a href="#cb39-53" tabindex="-1"></a>  pred_d <span class="ot">&lt;-</span> fit<span class="sc">$</span>uList<span class="sc">$</span><span class="st">`</span><span class="at">vsm(ism(genotipod), Gu = D1</span><span class="st">`</span></span>
 <span id="cb39-54"><a href="#cb39-54" tabindex="-1"></a>  </span>
 <span id="cb39-55"><a href="#cb39-55" tabindex="-1"></a>  <span class="co"># Soma dos preditos aditivos e dominantes</span></span>
-<span id="cb39-56"><a href="#cb39-56" tabindex="-1"></a>  pred <span class="ot">&lt;-</span> pred_a <span class="sc">+</span> pred_d</span>
+<span id="cb39-56"><a href="#cb39-56" tabindex="-1"></a>  pred <span class="ot">&lt;-</span> pred_a <span class="sc">+</span> pred_d <span class="sc">+</span> fit<span class="sc">$</span>b[[<span class="dv">1</span>]]</span>
 <span id="cb39-57"><a href="#cb39-57" tabindex="-1"></a>  truth <span class="ot">&lt;-</span> ph[[tr]]</span>
 <span id="cb39-58"><a href="#cb39-58" tabindex="-1"></a>  </span>
 <span id="cb39-59"><a href="#cb39-59" tabindex="-1"></a>  <span class="co"># Predição e métricas</span></span>
@@ -1605,7 +1643,7 @@ class="math inline">\(e\)</span> é o vetor de erros aleatórios.</p>
 <span id="cb41-48"><a href="#cb41-48" tabindex="-1"></a>    <span class="at">random =</span> <span class="sc">~</span> <span class="fu">vsm</span>(<span class="fu">ism</span>(genotipo), <span class="at">Gu =</span> K1) <span class="sc">+</span> <span class="fu">vsm</span>(<span class="fu">ism</span>(genotipod), <span class="at">Gu =</span> D1) <span class="sc">+</span> <span class="fu">vsm</span>(<span class="fu">ism</span>(genotipoe), <span class="at">Gu =</span> E1) ,</span>
 <span id="cb41-49"><a href="#cb41-49" tabindex="-1"></a>    <span class="at">data =</span> td,</span>
 <span id="cb41-50"><a href="#cb41-50" tabindex="-1"></a>    <span class="at">rcov =</span> <span class="sc">~</span> units,</span>
-<span id="cb41-51"><a href="#cb41-51" tabindex="-1"></a>    <span class="at">tolParInv =</span> <span class="fu">ifelse</span>(idx <span class="sc">==</span> <span class="dv">29</span> <span class="sc">|</span> idx <span class="sc">==</span> <span class="dv">45</span>, <span class="fl">5e-3</span>, <span class="fl">1e-6</span>) <span class="co"># Ajuste de tolerância para a matriz inversa,</span></span>
+<span id="cb41-51"><a href="#cb41-51" tabindex="-1"></a>    <span class="at">tolParInv =</span> <span class="fu">ifelse</span>(idx <span class="sc">==</span> <span class="dv">29</span> <span class="sc">|</span> idx <span class="sc">==</span> <span class="dv">44</span> <span class="sc">|</span> idx <span class="sc">==</span> <span class="dv">75</span>, <span class="fl">5e-3</span>, <span class="fl">1e-6</span>) <span class="co"># Ajuste de tolerância para a matriz inversa,</span></span>
 <span id="cb41-52"><a href="#cb41-52" tabindex="-1"></a>  )</span>
 <span id="cb41-53"><a href="#cb41-53" tabindex="-1"></a>  </span>
 <span id="cb41-54"><a href="#cb41-54" tabindex="-1"></a>  <span class="co"># Extração dos preditos e verdadeiros valores</span></span>
@@ -1614,11 +1652,11 @@ class="math inline">\(e\)</span> é o vetor de erros aleatórios.</p>
 <span id="cb41-57"><a href="#cb41-57" tabindex="-1"></a>  pred_e <span class="ot">&lt;-</span> fit<span class="sc">$</span>uList<span class="sc">$</span><span class="st">`</span><span class="at">vsm(ism(genotipoe), Gu = E1</span><span class="st">`</span></span>
 <span id="cb41-58"><a href="#cb41-58" tabindex="-1"></a>  </span>
 <span id="cb41-59"><a href="#cb41-59" tabindex="-1"></a>  <span class="co"># Soma dos preditos aditivos, dominantes e epistáticos</span></span>
-<span id="cb41-60"><a href="#cb41-60" tabindex="-1"></a>  pred <span class="ot">&lt;-</span> pred_a <span class="sc">+</span> pred_d <span class="sc">+</span> pred_e</span>
+<span id="cb41-60"><a href="#cb41-60" tabindex="-1"></a>  pred <span class="ot">&lt;-</span> pred_a <span class="sc">+</span> pred_d <span class="sc">+</span> pred_e <span class="sc">+</span> fit<span class="sc">$</span>b[[<span class="dv">1</span>]]</span>
 <span id="cb41-61"><a href="#cb41-61" tabindex="-1"></a>  truth <span class="ot">&lt;-</span> ph[[tr]]</span>
 <span id="cb41-62"><a href="#cb41-62" tabindex="-1"></a>  </span>
 <span id="cb41-63"><a href="#cb41-63" tabindex="-1"></a>  <span class="co"># Predição e métricas</span></span>
-<span id="cb41-64"><a href="#cb41-64" tabindex="-1"></a>  pred <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(fit<span class="sc">$</span>u, ph)</span>
+<span id="cb41-64"><a href="#cb41-64" tabindex="-1"></a>  pred <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(pred, ph)</span>
 <span id="cb41-65"><a href="#cb41-65" tabindex="-1"></a>  </span>
 <span id="cb41-66"><a href="#cb41-66" tabindex="-1"></a>  <span class="co"># Cálculo dos GEBVs para treino e validação</span></span>
 <span id="cb41-67"><a href="#cb41-67" tabindex="-1"></a>  pred_T <span class="ot">&lt;-</span> pred[<span class="sc">-</span>val_idx, <span class="st">&quot;mu&quot;</span>]</span>
@@ -2465,16 +2503,16 @@ GBLUP_A
 BM
 </td>
 <td style="text-align:right;">
-NaN
+0.0455
 </td>
 <td style="text-align:right;">
 NA
 </td>
 <td style="text-align:right;">
-2.1107
+0.5178
 </td>
 <td style="text-align:right;">
-0.0667
+0.0392
 </td>
 </tr>
 <tr>
@@ -2485,16 +2523,16 @@ GBLUP_AD
 BM
 </td>
 <td style="text-align:right;">
--0.0683
+-0.0368
 </td>
 <td style="text-align:right;">
-0.1041
+0.1108
 </td>
 <td style="text-align:right;">
-2.1114
+0.5268
 </td>
 <td style="text-align:right;">
-0.0654
+0.0447
 </td>
 </tr>
 <tr>
@@ -2505,16 +2543,16 @@ GBLUP_ADE
 BM
 </td>
 <td style="text-align:right;">
--0.0805
+-0.0337
 </td>
 <td style="text-align:right;">
-NA
+0.1174
 </td>
 <td style="text-align:right;">
-2.1100
+0.5280
 </td>
 <td style="text-align:right;">
-0.0668
+0.0449
 </td>
 </tr>
 <tr>
@@ -2691,10 +2729,10 @@ Cer
 0.0244
 </td>
 <td style="text-align:right;">
-2.5420
+0.5740
 </td>
 <td style="text-align:right;">
-0.0399
+0.0329
 </td>
 </tr>
 <tr>
@@ -2705,16 +2743,16 @@ GBLUP_AD
 Cer
 </td>
 <td style="text-align:right;">
-0.0513
+0.0106
 </td>
 <td style="text-align:right;">
-0.1439
+0.1182
 </td>
 <td style="text-align:right;">
-2.5484
+0.5990
 </td>
 <td style="text-align:right;">
-0.0542
+0.1241
 </td>
 </tr>
 <tr>
@@ -2725,16 +2763,16 @@ GBLUP_ADE
 Cer
 </td>
 <td style="text-align:right;">
-0.1348
+0.0153
 </td>
 <td style="text-align:right;">
-0.2152
+0.1148
 </td>
 <td style="text-align:right;">
-2.5411
+0.5839
 </td>
 <td style="text-align:right;">
-0.0411
+0.0474
 </td>
 </tr>
 <tr>
@@ -2905,16 +2943,16 @@ GBLUP_A
 Prod.Cor
 </td>
 <td style="text-align:right;">
--0.0071
+0.0117
 </td>
 <td style="text-align:right;">
-0.1375
+0.1019
 </td>
 <td style="text-align:right;">
-5.9770
+3.0114
 </td>
 <td style="text-align:right;">
-0.4122
+0.2425
 </td>
 </tr>
 <tr>
@@ -2925,16 +2963,16 @@ GBLUP_AD
 Prod.Cor
 </td>
 <td style="text-align:right;">
--0.0196
+0.0188
 </td>
 <td style="text-align:right;">
-0.1281
+0.1361
 </td>
 <td style="text-align:right;">
-5.9827
+3.0176
 </td>
 <td style="text-align:right;">
-0.4052
+0.2412
 </td>
 </tr>
 <tr>
@@ -2945,16 +2983,16 @@ GBLUP_ADE
 Prod.Cor
 </td>
 <td style="text-align:right;">
--0.0202
+0.0051
 </td>
 <td style="text-align:right;">
-0.1130
+0.1154
 </td>
 <td style="text-align:right;">
-5.9805
+3.0195
 </td>
 <td style="text-align:right;">
-0.4064
+0.2424
 </td>
 </tr>
 <tr>
