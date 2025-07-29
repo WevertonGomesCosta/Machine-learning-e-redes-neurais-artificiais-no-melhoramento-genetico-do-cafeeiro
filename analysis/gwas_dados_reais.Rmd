@@ -8,7 +8,7 @@ url: https://wevertongomescosta.github.io/Machine-learning-e-redes-neurais-artif
 output:
   workflowr::wflow_html:
     toc: TRUE
-    toc.float: TRUE
+    toc_float: TRUE
   highlight: github
 editor_options:
   chunk_output_type: console
@@ -19,7 +19,7 @@ github-repo: wevertongomescosta/Machine-learning-e-redes-neurais-artificiais-no-
 knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 ```
 
-# Análise de Associação Genômica Ampla (GWAS) - Dados Reais (Coffea arabica)
+# Estudo de Associação Genômica Ampla (GWAS) - Dados Reais (Coffea arabica)
 
 Este script realiza uma análise de associação genômica ampla (GWAS) utilizando o pacote GAPIT em R. Ele carrega dados fenotípicos e genotípicos reais, prepara os dados para análise e executa modelos de GWAS para cada combinação de traço e modelo especificado. Os resultados são salvos em um arquivo RDS.
 
@@ -284,7 +284,7 @@ Os modelos GLM (General Linear Model), MLM (Mixed Linear Model), CMLM (Compresse
 models_gwas <- c("GLM", "MLM", "CMLM", "MLMM", "SUPER", "FarmCPU", "Blink")
 ```
 
-### 4.1 Loop para executar GAPIT em paralelo
+### 4.1 Loop para GWAS
 
 Para executar a análise de GWAS em paralelo, utilizamos o pacote `doParallel` para configurar um cluster que permite a execução simultânea de múltiplas análises. Isso acelera significativamente o processo, especialmente quando lidamos com grandes conjuntos de dados e múltiplos modelos.
 
