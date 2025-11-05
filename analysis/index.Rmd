@@ -17,7 +17,6 @@ github-repo: wevertongomescosta/Machine-learning-e-redes-neurais-artificiais-no-
 
 Bem-vindo! Este repositório reúne código, dados e relatórios associados ao estudo de seleção genômica ampla (GWS) em Coffea arabica, empregando métodos de machine learning e redes neurais artificiais para seleção de genótipos e detecção de SNPs informativos.
 
-![Pipeline de Análise](images/analysis_pipeline.png)
 
 ## Publicação Associada
 
@@ -32,12 +31,11 @@ Este projeto foi desenvolvido no âmbito das pesquisas do [Laboratório de Intel
 
 ## Recursos Disponíveis
 
-1. **Código de Análise**: Scripts R/Python para pré-processamento, modelagem e avaliação.  
+1. **Código de Análise**: Scripts R para pré-processamento, modelagem e avaliação.  
 2. **Dados**: Genótipos reais (195 indivíduos, 21 211 SNPs) e simulados (1 000 indivíduos, 4 010 SNPs).  
 3. **Notebooks**: Exemplos interativos de EDA, GWS e GWAS.  
 4. **Visualizações**: Gráficos de acurácia (R²), RMSE e ranking de genótipos.  
 
-![Arquitetura do Modelo](images/model_architecture.png)
 
 ## Como Utilizar
 1. Clone o repositório: `git clone https://github.com/wevertongomescosta/Genomic-prediction-through-machine-learning-and-neural-networks-for-traits-with-epistasis.git`
@@ -74,8 +72,6 @@ licae@ufv.br | [https://www.licae.ufv.br/](https://www.licae.ufv.br/)
 
 Welcome! This repository gathers code, data, and reports associated with the Genome Wide Selection (GWS) study in *Coffea arabica*, employing machine learning and artificial neural network methods for genotype selection and informative SNP detection.
 
-![Analysis Pipeline](images/analysis_pipeline.png)
-
 ## Associated Project
 
 This work is part of the Research Project:
@@ -90,12 +86,10 @@ This project was developed within the research activities of the [Computational 
 
 ## Available Resources
 
-1. **Analysis Code**: R and Python scripts for preprocessing, modeling, and evaluation.  
+1. **Analysis Code**: R scripts for preprocessing, modeling, and evaluation.  
 2. **Data**: Real genotypes (195 individuals, 21,211 SNPs) and simulated (1,000 individuals, 4,010 SNPs).  
 3. **Notebooks**: Interactive examples of EDA, GWS, and GWAS.  
 4. **Visualizations**: Plots of accuracy (R²), RMSE, and genotype rankings.  
-
-![Model Architecture](images/model_architecture.png)
 
 ## How to Use
 

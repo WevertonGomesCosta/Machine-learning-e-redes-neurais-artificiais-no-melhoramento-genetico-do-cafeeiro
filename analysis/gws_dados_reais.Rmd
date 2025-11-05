@@ -16,7 +16,7 @@ github-repo: wevertongomescosta/Machine-learning-e-redes-neurais-artificiais-no-
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, out.width = "100%")
 ```
 
 # Seleção Genômica Ampla - Dados Reais (Coffea arabica)

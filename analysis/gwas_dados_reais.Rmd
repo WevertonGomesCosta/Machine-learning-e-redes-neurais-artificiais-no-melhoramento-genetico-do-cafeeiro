@@ -16,7 +16,7 @@ github-repo: wevertongomescosta/Machine-learning-e-redes-neurais-artificiais-no-
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, out.width = "100%")
 ```
 
 # Estudo de Associação Genômica Ampla (GWAS) - Dados Reais (Coffea arabica)
@@ -267,8 +267,8 @@ p <- p +
 print(p)
 ```
 
-```{r plot-ld-save, include = FALSE}
-ggsave(filename = "output/real_lddecay.tiff", plot = p, width = 12, height = 8, dpi = 600)
+```{r plot-ld-save, include = FALSE, eval=FALSE}
+ggsave(filename = "output/real_lddecay.png", plot = p, width = 12, height = 8, dpi = 600)
 ```
 
 Definimos um limiar de LD de 0.8 e obtivemos que a distância de decaimento é aproximadamente **`r round(closest_d,2)`**, em par de bases.
