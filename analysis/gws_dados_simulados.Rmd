@@ -19,7 +19,7 @@ github-repo: wevertongomescosta/Machine-learning-e-redes-neurais-artificiais-no-
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
 
-# Seleção Genõmica Ampla - Dados Simulados
+# Seleção Genômica Ampla - Dados Simulados
 
 Este documento apresenta a implementação de modelos de seleção genômica ampla (GWS) utilizando dados simulados. Os modelos avaliados incluem G-BLUP, MARS, Random Forest, Bagging, Boosting e Redes Neurais Artificiais. A validação cruzada é utilizada para avaliar a acurácia preditiva dos modelos.
 
